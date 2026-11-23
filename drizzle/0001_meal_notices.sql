@@ -1,0 +1,1 @@
+ALTER TABLE "meal_events" ADD COLUMN "notices" text[] DEFAULT '{}'::text[] NOT NULL;
