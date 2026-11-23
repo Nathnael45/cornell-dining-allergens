@@ -41,7 +41,7 @@ async function main() {
       break;
     case "research": {
       // Research up to N queued foods (default 25). Spends Anthropic credits.
-      const stats = await runResearchBatch(db, { limit: Number(arg ?? 25), log: (m) => console.error(m) });
+      const stats = await runResearchBatch(db, { limit: Number(arg ?? 25), concurrency: Number(process.env.RESEARCH_CONCURRENCY ?? 4), log: (m) => console.error(m) });
       console.log(JSON.stringify({ ...stats, costUsd: Number(stats.costUsd.toFixed(3)) }, null, 2));
       break;
     }
