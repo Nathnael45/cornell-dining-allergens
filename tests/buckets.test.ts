@@ -90,3 +90,23 @@ describe("gluten-free likelihood", () => {
     expect(resolve(ph, null, ctx).gf).toBeNull();
   });
 });
+
+describe("obvious gluten is never missed", () => {
+  it("placeholders that name gluten foods are 'unlikely' gluten-free (Chef's Choice Pasta)", async () => {
+    const { researchFood } = await import("@/lib/research/research");
+    const r = await researchFood({ name: "Chef's Choice Pasta", servedAt: [], siblings: [], references: [] });
+    expect(r.kind).toBe("placeholder");
+    expect(r.profile.allergens.gluten.status).toBe("contains");
+    const stored = { allergens: r.profile.allergens, diets: r.profile.diets, flags: { kind: "placeholder" }, likelyIngredients: [] };
+    const res = resolve(stored, null, ctx);
+    expect(res.gf?.rating).toBe("unlikely");
+    expect(verdict({ id: 1, name: "x", ...encode(res), placeholder: true }, prefs({ avoid: ["gluten"] })).bucket).toBe("avoid");
+  });
+
+  it("a confident gluten-free rating can't override research that found gluten", () => {
+    const p = stored({ gluten: "contains", wheat: "contains" });
+    p.allergens.gluten.reason = 'keyword floor (name): "breaded"';
+    p.flags = { kind: "researched", gf: { rating: "likely", reason: "model said so" } };
+    expect(resolve(p, null, ctx).gf).toMatchObject({ rating: "less_likely", reason: "contains breaded" });
+  });
+});

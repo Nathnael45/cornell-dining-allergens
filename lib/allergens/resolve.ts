@@ -74,8 +74,16 @@ function glutenFree(ai: StoredProfile | null, official: StoredProfile | null, al
   const off = official?.allergens.gluten?.status;
   if (off === "contains") return { rating: "unlikely", reason: "Cornell's label lists gluten", source: "official" };
   if (off === "free") return { rating: "definitely", reason: "Cornell's label lists no gluten", source: "official" };
-  if (!ai || ai.flags?.kind === "placeholder" || ai.flags?.kind === "not_food") return null;
-  if (ai.flags?.gf) return { ...ai.flags.gf, source: "ai" };
+  if (!ai || ai.flags?.kind === "not_food") return null;
+  const glutenEvidence = g.status === "contains" ? `contains ${(g.reason.match(/"([^"]+)"/)?.[1] ?? g.reason) || "gluten"}` : "";
+  // Rotating items ("Chef's Choice Pasta"): only the name is known. Say "unlikely" when it names gluten.
+  if (ai.flags?.kind === "placeholder") return g.status === "contains" ? { rating: "unlikely", reason: glutenEvidence, source: "ai" } : null;
+  if (ai.flags?.gf) {
+    // Safety net: research found gluten in the recipe, so a "definitely/likely" rating can't stand.
+    const confident = ai.flags.gf.rating === "definitely" || ai.flags.gf.rating === "likely";
+    if (g.status === "contains" && confident) return { rating: "less_likely", reason: glutenEvidence, source: "ai" };
+    return { ...ai.flags.gf, source: "ai" };
+  }
   const fallback: Partial<Record<Status, GfRating>> = { contains: "unlikely", may_contain: "less_likely", free: "likely" };
   const rating = fallback[g.status];
   return rating ? { rating, reason: g.reason, source: "ai" } : null;

@@ -46,16 +46,10 @@ export function finalize(modelProfile: AllergenProfileData, name: string): { pro
 
 export async function researchFood(input: ResearchInput, opts: ResearchOptions = {}): Promise<ResearchResult> {
   if (isPlaceholderName(input.name)) {
-    return {
-      kind: "placeholder",
-      profile: unknownProfile("rotating or build-your-own item; check the station"),
-      modelOnly: null,
-      runs: [],
-      models: [],
-      hardDisagreements: [],
-      floorHits: [],
-      usage: zeroUsage(),
-    };
+    // No model call (the dish changes daily), but the name still says a lot: "Chef's Choice Pasta"
+    // certainly has gluten, "Assorted Cheese Pizza" milk. The keyword floor catches those.
+    const { profile, floorHits } = finalize(unknownProfile("changes day to day; check the station"), input.name);
+    return { kind: "placeholder", profile, modelOnly: null, runs: [], models: [], hardDisagreements: [], floorHits, usage: zeroUsage() };
   }
 
   const samples = Math.max(1, opts.samples ?? RESEARCH_SAMPLES);

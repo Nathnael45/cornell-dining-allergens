@@ -1,48 +1,54 @@
 @import "tailwindcss";
 
 /*
- * Tokens. An evergreen header band (Ithaca's gorges), quiet sage paper, white panels.
- * Status colors carry meaning; butter yellow marks the primary action on the band.
+ * Tokens: Cornell carnelian header, white pages, warm-gray sidebar, charcoal text.
+ * Green/amber carry status meaning; red is the brand and the selection color.
  */
 :root {
-  --band: #12352f;
-  --band-2: #194640;
-  --band-ink: #eaf2ee;
-  --band-muted: #a9c2b9;
-  --accent: #f2c14e;
-  --accent-ink: #2b2106;
-  --paper: #eef3f0;
+  --band: #b31b1b;
+  --band-2: #9a1515;
+  --band-ink: #ffffff;
+  --band-muted: #f6d6d6;
+  --accent: #ffffff; /* primary action on the red band */
+  --accent-ink: #b31b1b;
+  --brand: #b31b1b; /* selections on light surfaces */
+  --brand-tint: #fbeaea;
+  --paper: #ffffff;
+  --side: #f7f5f4;
   --surface: #ffffff;
-  --ink: #15221f;
-  --muted: #5c6b66;
-  --rule: #dce5e0;
-  --fit: #1e8a57;
-  --fit-tint: #dff2e7;
-  --check: #9a5d00;
-  --check-tint: #fdf0d6;
-  --avoid: #8e9a96;
-  --avoid-tint: #edf1ef;
-  --focus: #2f6fb0;
+  --ink: #222222;
+  --muted: #5f5a57;
+  --rule: #e7e2df;
+  --fit: #15803d;
+  --fit-tint: #e6f4ea;
+  --check: #b45309;
+  --check-tint: #fdf1e2;
+  --avoid: #8a8582;
+  --avoid-tint: #f1eeec;
+  --focus: #1d4ed8;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --band: #0e2420;
-    --band-2: #143630;
-    --band-ink: #e7efeb;
-    --band-muted: #93ada4;
-    --paper: #0f1715;
-    --surface: #17221f;
-    --ink: #e7efeb;
-    --muted: #9db0a9;
-    --rule: #26352f;
-    --fit: #5bc48d;
-    --fit-tint: #173326;
-    --check: #e8b04e;
-    --check-tint: #3a2c12;
-    --avoid: #6f7d78;
-    --avoid-tint: #1d2926;
-    --focus: #7fb2e6;
+    --band: #8c1616;
+    --band-2: #741212;
+    --band-muted: #e9b9b9;
+    --accent-ink: #8c1616;
+    --brand: #ef6b6b;
+    --brand-tint: #3a1d1d;
+    --paper: #161313;
+    --side: #1d1919;
+    --surface: #221d1c;
+    --ink: #f1ecea;
+    --muted: #b1a8a5;
+    --rule: #342c2a;
+    --fit: #4ade80;
+    --fit-tint: #173322;
+    --check: #f0a95a;
+    --check-tint: #3a2a16;
+    --avoid: #847c79;
+    --avoid-tint: #2a2423;
+    --focus: #93b4ff;
   }
 }
 
@@ -53,7 +59,10 @@
   --color-band-muted: var(--band-muted);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
+  --color-brand: var(--brand);
+  --color-brand-tint: var(--brand-tint);
   --color-paper: var(--paper);
+  --color-side: var(--side);
   --color-surface: var(--surface);
   --color-ink: var(--ink);
   --color-muted: var(--muted);
@@ -87,7 +96,7 @@ body {
 }
 
 .band :focus-visible {
-  outline-color: var(--accent);
+  outline-color: #ffffff;
 }
 
 @media (prefers-reduced-motion: reduce) {
