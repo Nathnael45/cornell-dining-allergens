@@ -136,3 +136,18 @@ describe("options rating (main dishes that fit)", () => {
     expect(rateOptions([{ ...item(stored()), role: undefined }], prefs({ avoid: ["milk"] })).level).toBe("limited");
   });
 });
+
+describe("shortName", () => {
+  it("shortens hall names for the phone strip", async () => {
+    const { shortName } = await import("@/components/today");
+    expect(["Jansen's Dining Room at Bethe House", "Becker House Dining Room", "Morrison Dining", "North Star Dining Room", "Okenshields", "104West!", "Risley Dining Room"].map(shortName)).toEqual([
+      "Jansen's (Bethe)",
+      "Becker",
+      "Morrison",
+      "North Star",
+      "Okenshields",
+      "104West!",
+      "Risley",
+    ]);
+  });
+});

@@ -5,7 +5,7 @@ import { Band } from "./band";
 import { DayNav, pickMeal, time } from "./day-nav";
 import { HallMenu } from "./hall-menu";
 import { RestrictionPanel, Restrictions } from "./restrictions";
-import { HallList, HallNav } from "./today";
+import { HallList, HallNav, HallStrip } from "./today";
 
 type SP = Record<string, string | string[] | undefined>;
 
@@ -55,7 +55,8 @@ export async function DayView({ sp, slug }: { sp: SP; slug?: string }) {
           {slug && !hall && <p className="py-8 text-muted">This dining hall has no menu posted for that day.</p>}
           {hall && (
             <>
-              <Link href={`/?date=${date}&meal=${meal.toLowerCase()}`} className="mt-4 inline-block text-[0.95rem] text-muted lg:hidden">
+              <HallStrip halls={day.halls} meal={meal} date={date} selected={hall.slug} />
+              <Link href={`/?date=${date}&meal=${meal.toLowerCase()}`} className="mt-3 inline-block text-[0.95rem] text-muted lg:hidden">
                 <span aria-hidden>‹ </span>All dining halls
               </Link>
               <h1 className="pt-2 font-display text-[2rem] leading-tight font-bold lg:pt-6">{hall.name}</h1>

@@ -17,14 +17,14 @@ export const time = (iso: string) =>
 export function DayNav({ base, dates, date, today, meals, meal }: { base: string; dates: string[]; date: string; today: string; meals: string[]; meal: string }) {
   const href = (d: string, m?: string) => `${base}?date=${d}${m ? `&meal=${m.toLowerCase()}` : ""}`;
   return (
-    <nav aria-label="Day and meal" className="flex flex-col gap-3 pt-3 pb-4 lg:flex-row lg:items-center lg:justify-between">
+    <nav aria-label="Day and meal" className="flex flex-col gap-2 pt-2.5 pb-3 lg:flex-row lg:items-center lg:justify-between lg:gap-3 lg:pt-3 lg:pb-4">
       <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] lg:mx-0 lg:px-0">
         {dates.map((d) => (
           <Link
             key={d}
             href={href(d)}
             aria-current={d === date ? "date" : undefined}
-            className={`shrink-0 rounded-full px-3.5 py-1.5 text-[0.95rem] ${d === date ? "bg-white font-bold text-band" : "text-band-ink ring-1 ring-white/35 hover:bg-white/10"}`}
+            className={`shrink-0 rounded-full px-3 py-1 text-[0.9rem] lg:px-3.5 lg:py-1.5 lg:text-[0.95rem] ${d === date ? "bg-white font-bold text-band" : "text-band-ink ring-1 ring-white/35 hover:bg-white/10"}`}
           >
             {dayLabel(d, today)}
           </Link>
@@ -37,7 +37,7 @@ export function DayNav({ base, dates, date, today, meals, meal }: { base: string
               key={m}
               href={href(date, m)}
               aria-current={m === meal ? "page" : undefined}
-              className={`flex-1 rounded-xl px-3 py-2 text-center text-[1rem] ${m === meal ? "bg-white font-bold text-band" : "text-band-ink hover:bg-white/10"}`}
+              className={`flex-1 rounded-xl px-3 py-1.5 text-center text-[0.95rem] lg:py-2 lg:text-[1rem] ${m === meal ? "bg-white font-bold text-band" : "text-band-ink hover:bg-white/10"}`}
             >
               {m}
             </Link>

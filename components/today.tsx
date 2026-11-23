@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { rateOptions, verdict, type OptionsRating, type Prefs } from "@/lib/allergens/buckets";
 import { OptionsBadge, OptionsDot, optionsLine } from "./options";
 import type { Hall } from "@/lib/menu";
@@ -179,6 +179,45 @@ export function HallNav({ halls, meal, date, selected }: { halls: Hall[]; meal: 
       ) : (
         <p className="mt-3 text-[0.82rem] text-muted">— = not serving this meal.</p>
       )}
+    </nav>
+  );
+}
+
+/** "Jansen's Dining Room at Bethe House" → "Jansen's (Bethe)", "Becker House Dining Room" → "Becker". */
+export function shortName(name: string): string {
+  return name
+    .replace(/ Dining Room at Bethe House$/, " (Bethe)")
+    .replace(/( House)? Dining( Room)?$/, "")
+    .trim();
+}
+
+/** Phones: a swipeable strip of halls (the sidebar's job on wide screens). */
+export function HallStrip({ halls, meal, date, selected }: { halls: Hall[]; meal: string; date: string; selected?: string }) {
+  const prefs = usePrefs();
+  const { groups, filtering } = useGroups(halls, meal, prefs);
+  const current = useRef<HTMLAnchorElement>(null);
+  useEffect(() => {
+    // Braces matter: newer browsers return a Promise from scrollIntoView, and effects may only return cleanups.
+    current.current?.scrollIntoView({ inline: "center", block: "nearest" });
+  }, [selected]);
+  return (
+    <nav aria-label="Switch dining hall" className="-mx-4 flex gap-2 overflow-x-auto px-4 pt-3 pb-1 [scrollbar-width:none] lg:hidden">
+      {groups.flatMap((g) => g.rows).map(({ h, counts, total, options, off }) => {
+        const on = h.slug === selected;
+        return (
+          <Link
+            key={h.id}
+            ref={on ? current : undefined}
+            href={hallHref(h.slug, date, meal)}
+            aria-current={on ? "page" : undefined}
+            className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-[0.9rem] ring-1 ${on ? "bg-brand font-bold text-white ring-brand" : "bg-surface ring-rule"} ${off && !on ? "text-muted" : ""}`}
+          >
+            {options && <OptionsDot level={options.level} />}
+            {shortName(h.name)}
+            {!off && <span className={`tabular-nums ${on ? "text-white/80" : "text-muted"}`}>{filtering ? counts.fits : total}</span>}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

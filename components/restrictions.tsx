@@ -70,19 +70,19 @@ export function Restrictions() {
       aria-expanded={open}
       aria-controls={panelId}
       onClick={() => setOpen(!open)}
-      className="shrink-0 rounded-full bg-accent px-4 py-1.5 text-[0.95rem] font-bold text-accent-ink"
+      className="shrink-0 rounded-full bg-accent px-3.5 py-1 text-[0.92rem] font-bold text-accent-ink"
     >
       {label}
     </button>
   );
 
   return (
-    <section aria-label="Your dietary restrictions" className="pt-3 pb-1 lg:hidden">
+    <section aria-label="Your dietary restrictions" className="pt-2 lg:hidden">
       {chosen.length ? (
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-1 font-display text-[1.3rem] font-bold">I eat</span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="mr-1 font-display text-[1.15rem] font-bold">I eat</span>
           {chosen.map((c) => (
-            <span key={c.key} className="inline-flex items-center rounded-full bg-band-2 py-1 pr-1.5 pl-3 text-[0.98rem]">
+            <span key={c.key} className="inline-flex items-center rounded-full bg-band-2 py-0.5 pr-1 pl-2.5 text-[0.92rem]">
               {c.label}
               <button type="button" onClick={c.remove} aria-label={`Remove ${c.label}`} className="ml-1 grid size-6 place-items-center rounded-full text-band-muted hover:bg-white/10">
                 ×
@@ -93,7 +93,7 @@ export function Restrictions() {
         </div>
       ) : (
         <div className="flex items-center justify-between gap-3">
-          <p className="font-display text-[1.3rem] leading-snug font-bold">What do you avoid?</p>
+          <p className="font-display text-[1.15rem] leading-snug font-bold">What do you avoid?</p>
           {edit("Choose")}
         </div>
       )}

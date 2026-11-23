@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import { GF_LABEL, LABEL, rateOptions, verdict, type CompactItem, type Prefs, type Verdict } from "@/lib/allergens/buckets";
 import { OptionsSummary } from "./options";
 import type { Resolved, Source } from "@/lib/allergens/resolve";
@@ -139,16 +139,16 @@ function Detail({ detail, prefs }: { detail: Resolved | null | "error"; prefs: P
   const row = (a: AssessedAllergen) => {
     const x = detail.allergens[a];
     return (
-      <tr key={a} className="align-top">
-        <th scope="row" className="py-1 pr-3 text-left font-normal whitespace-nowrap">
+      <Fragment key={a}>
+        <span className="pt-1 whitespace-nowrap">
           {LABEL[a][0].toUpperCase() + LABEL[a].slice(1)}
-        </th>
-        <td className={`py-1 pr-3 font-bold whitespace-nowrap ${x.status === "contains" ? "" : x.status === "free" ? "text-fit" : "text-check"}`}>{STATUS[x.status]}</td>
-        <td className="py-1 text-muted">
+        </span>
+        <span className={`pt-1 font-bold whitespace-nowrap ${x.status === "contains" ? "" : x.status === "free" ? "text-fit" : "text-check"}`}>{STATUS[x.status]}</span>
+        <span className="col-span-2 pb-1 text-[0.9rem] text-muted sm:col-span-1 sm:pt-1 sm:text-[0.94rem]">
           {SOURCE[x.source]}
           {x.reason && !x.reason.startsWith("keyword floor") ? `: ${x.reason}` : ""}
-        </td>
-      </tr>
+        </span>
+      </Fragment>
     );
   };
 
@@ -156,26 +156,24 @@ function Detail({ detail, prefs }: { detail: Resolved | null | "error"; prefs: P
     <div className="mx-4 mb-4 rounded-xl bg-paper p-3 text-[0.94rem]">
       {!detail.researched && <p className="mb-2 text-check">We haven&apos;t researched this item yet. Treat everything as unknown.</p>}
       {detail.placeholder && <p className="mb-2 text-check">This changes day to day, so we can&apos;t say what&apos;s in it. Check the station.</p>}
-      <table className="w-full">
-        <tbody>
+      <div className="grid grid-cols-[auto_1fr] gap-x-3 sm:grid-cols-[auto_auto_1fr]">
           {detail.gf && (
-            <tr className="align-top">
-              <th scope="row" className="py-1 pr-3 text-left font-normal whitespace-nowrap">
+            <>
+              <span className="pt-1 whitespace-nowrap">
                 Gluten-free
-              </th>
-              <td className={`py-1 pr-3 font-bold whitespace-nowrap ${detail.gf.rating === "unlikely" ? "" : detail.gf.rating === "less_likely" ? "text-check" : "text-fit"}`}>
+              </span>
+              <span className={`pt-1 font-bold whitespace-nowrap ${detail.gf.rating === "unlikely" ? "" : detail.gf.rating === "less_likely" ? "text-check" : "text-fit"}`}>
                 {GF_LABEL[{ definitely: "d", likely: "l", less_likely: "s", unlikely: "u" }[detail.gf.rating]]}
-              </td>
-              <td className="py-1 text-muted">
+              </span>
+              <span className="col-span-2 pb-1 text-[0.9rem] text-muted sm:col-span-1 sm:pt-1 sm:text-[0.94rem]">
                 {SOURCE[detail.gf.source]}
                 {detail.gf.reason ? `: ${detail.gf.reason}` : ""}
-              </td>
-            </tr>
+              </span>
+            </>
           )}
           {mine.map(row)}
           {others.map(row)}
-        </tbody>
-      </table>
+      </div>
       {detail.likelyIngredients.length > 0 && <p className="mt-2 text-muted">Usually made with {detail.likelyIngredients.slice(0, 10).join(", ")}.</p>}
       <p className="mt-1 text-muted">
         Vegetarian: {detail.diets.vegetarian}. Vegan: {detail.diets.vegan}.
