@@ -211,3 +211,10 @@ export const researchJobs = pgTable("research_jobs", {
   lastError: text("last_error"),
   createdAt: ts("created_at").notNull().defaultNow(),
 });
+
+/** Small key/value settings, e.g. { paused: true } — read by the site and the scheduled jobs. */
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: jsonb("value").notNull(),
+  updatedAt: ts("updated_at").notNull().defaultNow(),
+});

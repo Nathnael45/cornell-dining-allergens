@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { connection } from "next/server";
+import { getDb } from "@/lib/db/client";
 import { getDates, getDay, ithacaToday } from "@/lib/menu";
+import { getPause } from "@/lib/settings";
 import { Band } from "./band";
 import { DayNav, pickMeal, time } from "./day-nav";
 import { HallMenu } from "./hall-menu";
@@ -15,6 +17,7 @@ type SP = Record<string, string | string[] | undefined>;
  */
 export async function DayView({ sp, slug }: { sp: SP; slug?: string }) {
   await connection(); // reads the clock (today, current meal) — must run per request
+  if ((await getPause(getDb())).paused) return <Paused />;
   const today = ithacaToday();
   const dates = await getDates(today);
   if (!dates.length) {
@@ -77,6 +80,24 @@ export async function DayView({ sp, slug }: { sp: SP; slug?: string }) {
           )}
           {!slug && <HallList halls={day.halls} meal={meal} date={date} />}
         </div>
+      </div>
+    </>
+  );
+}
+
+/** Shown while the app is switched off (no fresh menus, no research). */
+function Paused() {
+  return (
+    <>
+      <Band>
+        <div className="h-4" />
+      </Band>
+      <div className="mx-auto max-w-2xl px-4 py-12">
+        <h1 className="font-display text-[1.8rem] font-bold">Paused for now</h1>
+        <p className="mt-2 text-muted">
+          This site is switched off, so menus aren&apos;t being updated. Old menus could be wrong, so nothing is shown. Check back later, or
+          ask the person who runs it to turn it back on.
+        </p>
       </div>
     </>
   );

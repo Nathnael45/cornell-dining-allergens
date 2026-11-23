@@ -1,12 +1,14 @@
 import { revalidateTag } from "next/cache";
 import { isAuthorizedCron } from "@/lib/cron-auth";
 import { getDb } from "@/lib/db/client";
+import { getPause } from "@/lib/settings";
 import { runMenuIngest } from "@/lib/jobs";
 
 export const maxDuration = 120;
 
 export async function GET(request: Request) {
   if (!isAuthorizedCron(request)) return new Response("Unauthorized", { status: 401 });
+  if ((await getPause(getDb())).paused) return Response.json({ ok: true, skipped: "paused" });
   try {
     const stats = await runMenuIngest(getDb());
     revalidateTag("menus", "max");

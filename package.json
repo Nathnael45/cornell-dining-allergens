@@ -29,7 +29,10 @@
     "refloor": "tsx scripts/cli.ts refloor",
     "prod:refloor": "tsx --env-file=.env.neon scripts/cli.ts refloor",
     "roles": "tsx scripts/cli.ts roles",
-    "prod:roles": "tsx --env-file=.env.neon scripts/cli.ts roles"
+    "prod:roles": "tsx --env-file=.env.neon scripts/cli.ts roles",
+    "prod:pause": "tsx --env-file=.env.neon scripts/cli.ts pause",
+    "prod:resume": "tsx --env-file=.env.neon scripts/cli.ts resume",
+    "prod:paused": "tsx --env-file=.env.neon scripts/cli.ts paused"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

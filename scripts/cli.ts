@@ -13,6 +13,9 @@ import { ingestSnapshot } from "@/lib/ingest/ingest";
 import { runMenuIngest, runNetNutritionSync } from "@/lib/jobs";
 import { refloorPlaceholders, runGlutenBackfill, runResearchBatch } from "@/lib/research/worker";
 import { runRoleBackfill } from "@/lib/research/roles";
+import { getPause, setPaused } from "@/lib/settings";
+import { count } from "drizzle-orm";
+import { researchJobs } from "@/lib/db/schema";
 
 async function main() {
   const [cmd, arg] = process.argv.slice(2);
@@ -56,6 +59,28 @@ async function main() {
       // Classify foods as main / side / sauce / dessert / drink (batched, ~$0.005 per 25 foods).
       const stats = await runRoleBackfill(db, { limit: Number(arg ?? 1000), log: (m) => console.error(m) });
       console.log(JSON.stringify({ ...stats, costUsd: Number(stats.costUsd.toFixed(3)) }));
+      break;
+    }
+    case "pause":
+      await setPaused(db, true);
+      console.log("Paused: the site shows a paused page and scheduled jobs make no API calls.");
+      break;
+    case "resume": {
+      await setPaused(db, false);
+      console.log("Resumed. Fetching fresh menus now (free)…");
+      const s = await runMenuIngest(db);
+      const [{ n }] = await db.select({ n: count() }).from(researchJobs);
+      console.log(`Menus updated: ${s.events.inserted} new meals, ${s.events.changed} changed, ${s.foods.new} new foods.`);
+      console.log(
+        n
+          ? `${n} foods are waiting for allergen research (about $${(n * 0.02).toFixed(2)}). They run at the next scheduled slot (4am/10am/4pm Ithaca time), or now with: npm run prod:research ${n}`
+          : "No foods waiting for research.",
+      );
+      break;
+    }
+    case "paused": {
+      const p = await getPause(db);
+      console.log(p.paused ? `Paused since ${p.since}` : "Running (not paused)");
       break;
     }
     case "refloor":

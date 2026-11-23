@@ -73,6 +73,18 @@ menu ingest and new-food research run 3× daily (4am, 10am, 4pm Ithaca time, as 
 The NetNutrition crawl takes ~7 minutes, too long for a Hobby function, so run it by hand every few
 weeks: `npm run prod:netnutrition` (the route `/api/cron/netnutrition` stays for a Pro plan).
 
+## On / off switch (save API usage)
+
+```bash
+npm run prod:pause     # site shows "Paused"; scheduled jobs skip their work (no Anthropic calls)
+npm run prod:resume    # back on: fetches fresh menus now (free) and tells you how many foods await
+                       # research and the rough cost; research runs at the next scheduled slot,
+                       # or immediately with: npm run prod:research <n>
+npm run prod:paused    # show the current state
+```
+
+The switch lives in the database (`app_settings`), so it takes effect immediately, with no redeploy.
+
 ## AI
 
 `npm run ai:check` sends one tiny request (~$0.001) to confirm `ANTHROPIC_API_KEY` works.
