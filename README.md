@@ -48,7 +48,28 @@ fixtures/                       real API snapshots used by tests
 tests/                          vitest suites
 ```
 
-## Deploying
+## Production
 
-Designed for Vercel: set `DATABASE_URL` (hosted Postgres, e.g. Neon) and `CRON_SECRET`, run
-`npm run db:migrate` against that database once, and the crons in `vercel.json` take over.
+- Vercel project: `cornell-dining-allergens` (linked via `vercel link`; `.vercel/` is git-ignored).
+- Database: Neon `cornell-dining-db` (free plan, us-east-1), provisioned through the Vercel Marketplace,
+  which injects `DATABASE_URL` (pooled) and `DATABASE_URL_UNPOOLED` into every environment.
+- Secrets in Vercel: `CRON_SECRET` (production). `ANTHROPIC_API_KEY` must be added before the research
+  worker is deployed: `vercel env add ANTHROPIC_API_KEY production`.
+
+Local development uses Docker Postgres via `.env.local`. To operate on production from your machine,
+pull its env into a separate, git-ignored file and use the `prod:*` scripts, which load only that file:
+
+```bash
+vercel env pull .env.neon --environment production --yes
+npm run prod:migrate        # applies migrations over the direct (unpooled) connection
+npm run prod:ingest         # live menu ingest into Neon
+npm run prod:netnutrition   # label crawl into Neon
+```
+
+Every CLI command prints the database host it is about to touch (`[db] …`), never credentials.
+
+## AI
+
+`npm run ai:check` sends one tiny request (~$0.001) to confirm `ANTHROPIC_API_KEY` works.
+The research model defaults to Claude Sonnet 5.5 (`lib/research/config.ts`); override per run with
+`RESEARCH_MODEL=claude-opus-5-5`.

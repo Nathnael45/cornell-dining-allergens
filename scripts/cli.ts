@@ -14,6 +14,12 @@ import { runMenuIngest, runNetNutritionSync } from "@/lib/jobs";
 
 async function main() {
   const [cmd, arg] = process.argv.slice(2);
+  // Migrations should bypass the connection pooler (Neon provides a direct URL for this).
+  if (cmd === "migrate" && process.env.DATABASE_URL_UNPOOLED) {
+    process.env.DATABASE_URL = process.env.DATABASE_URL_UNPOOLED;
+  }
+  const host = new URL(process.env.DATABASE_URL ?? "postgres://unset").hostname;
+  console.error(`[db] ${host}`); // which database we're about to touch (host only, never credentials)
   const db = getDb();
   switch (cmd) {
     case "migrate":

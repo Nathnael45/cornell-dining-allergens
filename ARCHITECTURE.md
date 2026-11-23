@@ -129,8 +129,8 @@ v1 workload: **~926 unique foods** to research once, then only newly seen names 
  NetNutrition ───┼─▶ [Cron: weekly] ──▶ netnutrition_items (official labels) ─▶ Postgres
  (CBORD)         │                                                               ▲ │
                  │   [Cron: research worker, every few min] ─────────────────────┤ │
- LLM (AI SDK ◀───┼──   1. NetNutrition exact match? → official profile          │ │
- + AI Gateway)   │     2. else: retrieve similar official labels (few-shot)      │ │
+ Claude API ◀─────┼──   1. NetNutrition exact match? → official profile          │ │
+ (Sonnet 5.5)   │     2. else: retrieve similar official labels (few-shot)      │ │
  (+ web search   │        + context (station, hall, siblings) → LLM ×2          │ │
   for brands)    │     3. keyword safety floor + consistency checks             │ │
                  │     4. conservative merge → allergen_profiles               │ │
@@ -361,8 +361,10 @@ NetNutrition doesn't express.
   suppliers (e.g. their mayo contains egg, and they stock "Gluten Free Tamari")
 - Cornell's taxonomy + definitions (coconut ≠ tree nut, vegan/vegetarian definitions)
 
-**Step 3. LLM research** (AI SDK `generateObject` with a zod schema, via AI Gateway; a Sonnet-class
-Claude model is plenty, and caching means only ~50–150 new names per week). Prompt rules:
+**Step 3. LLM research** (Anthropic SDK with structured output validated by a zod schema; default model
+**Claude Sonnet 5.5**, set in `lib/research/config.ts` and overridable per run, with the §9 eval deciding
+whether it meets the safety bar vs Opus 5.5. Caching means only ~50–150 new names per week, and the
+backfill can go through the Batch API at half price). Prompt rules:
 - Reason about the **typical institutional recipe** first (list likely ingredients), then map to allergens.
 - **Asymmetric instruction:** if a common preparation includes the allergen → `contains` or
   `may_contain`. `free` only when the allergen is absent from essentially all standard preparations.
@@ -430,8 +432,8 @@ cached by name, the strongest model is affordable.
 |---|---|---|
 | App | **Next.js (App Router) + TypeScript** | RSC caching fits "data changes hourly"; one codebase for site, crons, admin |
 | Hosting/cron | **Vercel** (Cron Jobs, Fluid Compute) | Zero-ops crons for ingest/research |
-| DB | **Postgres** (Neon via Vercel Marketplace) + **Drizzle** | Relational menu data + `jsonb` profiles; `pgvector` available for retrieval |
-| LLM | **AI SDK + AI Gateway**, Claude model, `generateObject` + zod | Typed structured output, model swaps without code changes, observability |
+| DB | **Postgres**: Neon `cornell-dining-db` (us-east-1, via Vercel Marketplace) in prod, Docker locally, + **Drizzle** | Relational menu data + `jsonb` profiles; `pgvector` available for retrieval |
+| LLM | **Anthropic SDK** (`@anthropic-ai/sdk`), Claude Sonnet 5.5 by default, structured output + zod | Direct API with Batch support for the backfill; model is one setting (`RESEARCH_MODEL`) |
 | UI | Tailwind + shadcn/ui | Fast, accessible primitives |
 | Tests | Vitest (parsers, normalization, keyword floor, resolution), Playwright (smoke) | Safety logic must be unit-tested |
 

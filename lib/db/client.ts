@@ -12,8 +12,11 @@ function makePool(): Pool {
   const url = process.env.DATABASE_URL;
   if (!url) throw new Error("DATABASE_URL is not set (see .env.example)");
   const isLocal = /@(localhost|127\.0\.0\.1)[:/]/.test(url);
+  // Hosted URLs (Neon) say sslmode=require; pg treats that as full certificate verification and
+  // warns. Say verify-full explicitly so the strict behavior is intentional and warning-free.
+  const connectionString = url.replace(/([?&]sslmode=)(prefer|require|verify-ca)\b/, "$1verify-full");
   return new Pool({
-    connectionString: url,
+    connectionString,
     max: 5,
     ssl: isLocal ? undefined : { rejectUnauthorized: true },
   });

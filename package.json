@@ -15,9 +15,14 @@
     "db:migrate": "tsx scripts/cli.ts migrate",
     "ingest": "tsx scripts/cli.ts ingest",
     "ingest:file": "tsx scripts/cli.ts ingest:file",
-    "netnutrition": "tsx scripts/cli.ts netnutrition"
+    "netnutrition": "tsx scripts/cli.ts netnutrition",
+    "prod:migrate": "tsx --env-file=.env.neon scripts/cli.ts migrate",
+    "prod:ingest": "tsx --env-file=.env.neon scripts/cli.ts ingest",
+    "prod:netnutrition": "tsx --env-file=.env.neon scripts/cli.ts netnutrition",
+    "ai:check": "tsx scripts/ai-check.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.12.0",
     "drizzle-orm": "^0.45.4",
     "next": "16.4.6",
     "pg": "^8.23.1",
