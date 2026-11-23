@@ -45,3 +45,6 @@ next-env.d.ts
 
 # local research scratch
 /.data
+
+# eval: cached raw model answers (re-scoring is free)
+/eval/.cache

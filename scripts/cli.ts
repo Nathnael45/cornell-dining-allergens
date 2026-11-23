@@ -11,6 +11,7 @@ import { closeDb, getDb } from "@/lib/db/client";
 import { parseEateries } from "@/lib/cornell/dining-api";
 import { ingestSnapshot } from "@/lib/ingest/ingest";
 import { runMenuIngest, runNetNutritionSync } from "@/lib/jobs";
+import { runResearchBatch } from "@/lib/research/worker";
 
 async function main() {
   const [cmd, arg] = process.argv.slice(2);
@@ -38,6 +39,12 @@ async function main() {
     case "netnutrition":
       console.log(JSON.stringify(await runNetNutritionSync(db, (m) => console.error(m)), null, 2));
       break;
+    case "research": {
+      // Research up to N queued foods (default 25). Spends Anthropic credits.
+      const stats = await runResearchBatch(db, { limit: Number(arg ?? 25), log: (m) => console.error(m) });
+      console.log(JSON.stringify({ ...stats, costUsd: Number(stats.costUsd.toFixed(3)) }, null, 2));
+      break;
+    }
     default:
       throw new Error(`unknown command "${cmd}"`);
   }

@@ -19,7 +19,10 @@
     "prod:migrate": "tsx --env-file=.env.neon scripts/cli.ts migrate",
     "prod:ingest": "tsx --env-file=.env.neon scripts/cli.ts ingest",
     "prod:netnutrition": "tsx --env-file=.env.neon scripts/cli.ts netnutrition",
-    "ai:check": "tsx scripts/ai-check.ts"
+    "ai:check": "tsx scripts/ai-check.ts",
+    "eval": "tsx eval/eval.ts",
+    "research": "tsx scripts/cli.ts research",
+    "prod:research": "tsx --env-file=.env.neon scripts/cli.ts research"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",
