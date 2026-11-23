@@ -13,3 +13,15 @@ export function Band({ children }: { children?: React.ReactNode; top?: boolean }
     </div>
   );
 }
+
+/** Loading state that keeps the header in place. */
+export function BandLoading({ text }: { text: string }) {
+  return (
+    <>
+      <Band>
+        <div className="h-28" />
+      </Band>
+      <p className="mx-auto max-w-6xl px-4 py-8 text-muted">{text}</p>
+    </>
+  );
+}

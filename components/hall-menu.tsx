@@ -16,7 +16,7 @@ export function HallMenu({ meal, eateryId }: { meal: Meal; eateryId: number }) {
     return <p className="py-10 text-muted">{meal.notices.length ? meal.notices.join(". ") : "No menu has been posted for this meal yet."}</p>;
   }
   return (
-    <div className="space-y-4 pt-5">
+    <div className="pt-5 xl:columns-2 xl:gap-4 [&>*]:mb-4 [&>*]:break-inside-avoid">
       {meal.notices.length > 0 && <p className="rounded-2xl bg-check-tint px-4 py-3 text-[0.95rem] text-check">{meal.notices.join(". ")}</p>}
       {meal.stations.map((s) => (
         <StationPanel key={s.name} name={s.name} items={s.items} prefs={prefs} filtering={filtering} eateryId={eateryId} />

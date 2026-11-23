@@ -11,7 +11,7 @@ import { closeDb, getDb } from "@/lib/db/client";
 import { parseEateries } from "@/lib/cornell/dining-api";
 import { ingestSnapshot } from "@/lib/ingest/ingest";
 import { runMenuIngest, runNetNutritionSync } from "@/lib/jobs";
-import { runGlutenBackfill, runResearchBatch } from "@/lib/research/worker";
+import { refloorPlaceholders, runGlutenBackfill, runResearchBatch } from "@/lib/research/worker";
 
 async function main() {
   const [cmd, arg] = process.argv.slice(2);
@@ -51,6 +51,10 @@ async function main() {
       console.log(JSON.stringify({ ...stats, costUsd: Number(stats.costUsd.toFixed(3)) }));
       break;
     }
+    case "refloor":
+      // Re-apply name rules to placeholder profiles ("Chef's Choice Pasta" → gluten). No API calls.
+      console.log(JSON.stringify(await refloorPlaceholders(db, (m) => console.error(m))));
+      break;
     default:
       throw new Error(`unknown command "${cmd}"`);
   }

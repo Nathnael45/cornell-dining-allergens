@@ -4,12 +4,12 @@
 import { and, eq, sql } from "drizzle-orm";
 import type { DB } from "@/lib/db/client";
 import { allergenProfiles, eateries, foods, mealEvents, menuItems, netnutritionItems, researchJobs, stations } from "@/lib/db/schema";
-import type { AllergenProfileData } from "@/lib/allergens/status";
+import { unknownProfile, type AllergenProfileData } from "@/lib/allergens/status";
 import { RESEARCH_MODEL } from "./config";
 import { costUsd } from "./llm";
 import { officialProfile } from "./official";
 import { PROMPT_VERSION, type ResearchInput } from "./prompt";
-import { researchFood, type ResearchOptions } from "./research";
+import { finalize, researchFood, type ResearchOptions } from "./research";
 import { buildIndex } from "./retrieve";
 import { rateGlutenFree, type GfRating } from "./gluten";
 
@@ -192,4 +192,24 @@ export async function runGlutenBackfill(db: DB, opts: { limit?: number; concurre
     }),
   );
   return stats;
+}
+
+/** Re-apply the name rules to stored placeholder profiles (no API calls). */
+export async function refloorPlaceholders(db: DB, log: (m: string) => void = () => {}) {
+  const rows = await db
+    .select({ id: allergenProfiles.id, name: foods.displayName, flags: allergenProfiles.flags })
+    .from(allergenProfiles)
+    .innerJoin(foods, eq(foods.id, allergenProfiles.foodId))
+    .where(and(eq(allergenProfiles.source, "ai"), eq(allergenProfiles.isCurrent, true), sql`${allergenProfiles.flags}->>'kind' = 'placeholder'`));
+  let changed = 0;
+  for (const r of rows) {
+    const { profile, floorHits } = finalize(unknownProfile("changes day to day; check the station"), r.name);
+    await db
+      .update(allergenProfiles)
+      .set({ allergens: profile.allergens, diets: profile.diets, flags: { ...(r.flags as object), floorHits } })
+      .where(eq(allergenProfiles.id, r.id));
+    if (floorHits.length) changed++;
+    log(`${floorHits.length ? floorHits.map((h) => `${h.allergen}:${h.matched}`).join(", ") : "-"}  ${r.name}`);
+  }
+  return { placeholders: rows.length, withHits: changed };
 }

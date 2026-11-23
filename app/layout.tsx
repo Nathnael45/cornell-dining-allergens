@@ -15,8 +15,8 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#12352f" },
-    { media: "(prefers-color-scheme: dark)", color: "#0e2420" },
+    { media: "(prefers-color-scheme: light)", color: "#b31b1b" },
+    { media: "(prefers-color-scheme: dark)", color: "#8c1616" },
   ],
 };
 
@@ -25,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="en" className={`${atkinson.variable} ${bricolage.variable} antialiased`}>
       <body className="min-h-dvh bg-paper text-ink">
         <main>{children}</main>
-        <footer className="mx-auto max-w-2xl px-4 pt-10 pb-12 text-[0.9rem] text-muted">
+        <footer className="mx-auto max-w-6xl px-4 pt-10 pb-12 text-[0.9rem] text-muted lg:pl-[21rem]">
           <p className="max-w-prose">
             Allergen information here is estimated from menu names and Cornell&apos;s nutrition labels. It can be wrong, and recipes
             change. Always check the card at the station or ask staff. With a severe allergy, talk to Cornell Dining&apos;s dietitians at{" "}
