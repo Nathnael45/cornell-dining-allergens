@@ -1,0 +1,7 @@
+# Never upload local secrets or caches with the deployment source
+.env*
+!.env.example
+.data
+eval/.cache
+node_modules
+.next
