@@ -68,6 +68,11 @@ npm run prod:netnutrition   # label crawl into Neon
 
 Every CLI command prints the database host it is about to touch (`[db] …`), never credentials.
 
+Scheduled jobs (`vercel.json`, Hobby plan = each cron at most once a day, 5-minute functions):
+menu ingest and new-food research run 3× daily (4am, 10am, 4pm Ithaca time, as UTC 09/15/21h).
+The NetNutrition crawl takes ~7 minutes, too long for a Hobby function, so run it by hand every few
+weeks: `npm run prod:netnutrition` (the route `/api/cron/netnutrition` stays for a Pro plan).
+
 ## AI
 
 `npm run ai:check` sends one tiny request (~$0.001) to confirm `ANTHROPIC_API_KEY` works.

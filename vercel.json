@@ -1,17 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
-    {
-      "path": "/api/cron/ingest",
-      "schedule": "5 * * * *"
-    },
-    {
-      "path": "/api/cron/netnutrition",
-      "schedule": "30 8 * * 1"
-    },
-    {
-      "path": "/api/cron/research",
-      "schedule": "35 * * * *"
-    }
+    { "path": "/api/cron/ingest", "schedule": "5 9 * * *" },
+    { "path": "/api/cron/ingest", "schedule": "5 15 * * *" },
+    { "path": "/api/cron/ingest", "schedule": "5 21 * * *" },
+    { "path": "/api/cron/research", "schedule": "35 9 * * *" },
+    { "path": "/api/cron/research", "schedule": "35 15 * * *" },
+    { "path": "/api/cron/research", "schedule": "35 21 * * *" }
   ]
 }
