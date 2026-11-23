@@ -87,6 +87,7 @@ async function main() {
       samples: { type: "string", default: "2" },
       seed: { type: "string", default: "1" },
       per: { type: "string", default: "5" }, // positives per allergen guaranteed in the sample
+      "exclude-seed": { type: "string" },
       concurrency: { type: "string", default: "4" },
     },
   });
@@ -104,12 +105,17 @@ async function main() {
     .filter((g): g is { labels: typeof rows; truth: Set<AssessedAllergen> } => g.truth !== null);
 
   // Stratified sample: a few positives for every allergen (rare ones too), then random fill.
-  const rand = rng(Number(a.seed));
-  const shuffled = [...gold].sort(() => rand() - 0.5);
-  const picked = new Set<(typeof gold)[number]>();
-  for (const al of ASSESSED_ALLERGENS) shuffled.filter((g) => g.truth.has(al)).slice(0, Number(a.per)).forEach((g) => picked.add(g));
-  for (const g of shuffled) if (picked.size < Number(a.n)) picked.add(g);
-  const sample = [...picked]; // ≥ n when stratification needs more to cover rare allergens
+  // --exclude-seed S removes the dishes seed S would pick, giving a held-out set for prompt changes.
+  const pick = (seed: number, pool: typeof gold) => {
+    const rand = rng(seed);
+    const shuffled = [...pool].sort(() => rand() - 0.5);
+    const picked = new Set<(typeof gold)[number]>();
+    for (const al of ASSESSED_ALLERGENS) shuffled.filter((g) => g.truth.has(al)).slice(0, Number(a.per)).forEach((g) => picked.add(g));
+    for (const g of shuffled) if (picked.size < Number(a.n)) picked.add(g);
+    return [...picked]; // ≥ n when stratification needs more to cover rare allergens
+  };
+  const excluded = new Set(a["exclude-seed"] ? pick(Number(a["exclude-seed"]), gold) : []);
+  const sample = pick(Number(a.seed), gold.filter((g) => !excluded.has(g)));
 
   const search = buildIndex(rows);
   const cacheDir = `eval/.cache/${model}/${effort}/${PROMPT_VERSION}`;
@@ -172,14 +178,14 @@ async function main() {
   const md = [
     `## Eval ${new Date().toISOString().slice(0, 10)} · ${model} · effort ${effort} · prompt ${PROMPT_VERSION}`,
     "",
-    `${results.length} dishes (seed ${a.seed}), ${samples} samples each. "fits" = free with confidence ≥ ${FITS_CONFIDENCE}. New API spend this run: $${spent.toFixed(2)} (${calls} calls).`,
+    `${results.length} dishes (seed ${a.seed}${a["exclude-seed"] ? `, held out from seed ${a["exclude-seed"]}` : ""}), ${samples} samples each. "fits" = free with confidence ≥ ${FITS_CONFIDENCE}. New API spend this run: $${spent.toFixed(2)} (${calls} calls).`,
     "",
     ...Object.entries(variants).flatMap(([t, r]) => [table(t, r), ""]),
     `#### False-safe cases in the shipped pipeline (${finalCases.length})`,
     ...(finalCases.length ? finalCases.map((c) => `- ${c}`) : ["- none"]),
   ].join("\n");
   mkdirSync("eval/results", { recursive: true });
-  const out = `eval/results/${new Date().toISOString().slice(0, 10)}-${model}-${effort}-n${results.length}.md`;
+  const out = `eval/results/${new Date().toISOString().slice(0, 10)}-${model}-${effort}-p${PROMPT_VERSION.split(".").at(-1)}-seed${a.seed}-n${results.length}.md`;
   writeFileSync(out, md + "\n");
   console.log(md);
   console.error(`\nwrote ${out}`);

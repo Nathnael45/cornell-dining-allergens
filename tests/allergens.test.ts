@@ -44,8 +44,13 @@ describe("keyword floor", () => {
     expect(floorOf("Coconut Rice")).not.toHaveProperty("tree_nuts");
     expect(floorOf("Turkey Bacon")).not.toHaveProperty("pork");
     expect(floorOf("Red Wine Vinaigrette")).toMatchObject({ alcohol: "contains" });
-    expect(floorOf("Red Wine Vinegar Dressing")).not.toHaveProperty("alcohol");
+    // Cornell labels wine vinegar as alcohol (e.g. its "Pickled Red Onion" label).
+    expect(floorOf("Red Wine Vinegar Dressing")).toMatchObject({ alcohol: "contains" });
+    expect(floorOf("Pickled Red Onion")).toMatchObject({ alcohol: "may_contain" });
+    expect(floorOf("Vanilla Greek Yogurt")).toMatchObject({ alcohol: "may_contain", milk: "contains" });
     expect(floorOf("Graham Crackers").pork).toBeUndefined();
+    expect(floorOf("Godiva Chocolate Cheesecake")).toMatchObject({ pork: "may_contain" });
+    expect(floorOf("Vegan Chocolate Mousse").pork).toBeUndefined();
   });
 
   it("only raises, never lowers", () => {

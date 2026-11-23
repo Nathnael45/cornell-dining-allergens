@@ -482,6 +482,33 @@ items show as "Check at station" in all modes. The eval runs in CI on prompt cha
 
 ---
 
+### Results (2026‑11‑23, `npm run eval`, files in `eval/results/`)
+
+Blind (dish name + café only), 2 runs merged + keyword floor + consistency, "fits" = free with
+confidence ≥ 0.8, scored against Cornell's `Contains:` lines.
+
+| Run | Model | Dishes | False "fits" / Cornell-positive cases | 9 major allergens + gluten | Cost |
+|---|---|---|---|---|---|
+| prompt v1, seed 1 | Sonnet 5.5 | 100 | 7 / 380 (1.8%) | 0 | $1.56 |
+| prompt v1, seed 1 | Opus 5.5 | 100 | 6 / 380 (1.6%) | 1 (soy) | $4.18 |
+| prompt v2, seed 1 (tuned on) | Sonnet 5.5 | 100 | 1 / 380 (0.3%) | 0 | $1.67 |
+| **prompt v2, held-out seed 2** | **Sonnet 5.5** | 100 | **2 / 417 (0.5%)** | **0** | $1.70 |
+| prompt v2, held-out seed 2 | Opus 5.5 | 100 | 1 / 417 (0.2%) | 0 | $4.33 |
+
+- v1 misses were almost all **Cornell conventions** the prompt didn't know: Cornell labels *alcohol* for wine
+  vinegar/balsamic and vanilla extract (19% of its labels), and *coconut* for coconut oil in plant-based
+  cheeses/spreads and GF/vegan baked goods. v2 adds both (prompt + floor).
+- Remaining held-out misses are one dish, "Godiva Chocolate Cheesecake" (pork — gelatin; coconut). A
+  gelatin-dessert floor rule (pork `may_contain`) was added afterwards, so that dish is now caught but was
+  seen during the held-out run; branded commercial desserts remain the riskiest category (web lookup of the
+  manufacturer's allergen statement is the planned fix).
+- **Decision: Sonnet 5.5.** Same safety as Opus within noise (same single dish missed), ~2.5× cheaper.
+- Usefulness is the open problem, not safety: ~56–59% of Cornell-negative allergen cases are shown as
+  "fits"; soy (8–15%) and milk (~40%) are flagged "may contain" very often. Improve with station-card
+  verification (Phase 3) rather than by loosening the model.
+- Caveats: rare allergens have small counts (shellfish 0–3 positives, coconut 8–10); the gold set is retail
+  café food, not dining-hall food; Cornell's own labels have errors (§12).
+
 ## 10. Roadmap
 
 | Phase | Deliverable | Done when |

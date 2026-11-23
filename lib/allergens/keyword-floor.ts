@@ -70,10 +70,15 @@ export const FLOOR_RULES: Rule[] = [
     match: /\b(pork|bacon|ham|prosciutto|pancetta|chorizo|pepperoni|salami|soppressata|carnitas|char siu|lard|kielbasa|bratwurst|andouille|guanciale|capicola|mortadella|tonkotsu|lechon|porchetta|cochinita)\b/i },
   { allergen: "pork", status: "may_contain", unless: /\bvegan\b|\bhalal\b|\bkosher\b/i,
     match: /\b(sausages?|hot dogs?|meatballs?|banh mi|dumplings?|potstickers?|gyoza|wontons?|bao|baked beans|collard greens|carbonara|jambalaya|gumbo|cassoulet|pozole|breakfast meat|meat lovers?)\b/i },
+  // gelatin (usually pork-derived) in desserts — found via Cornell's "Godiva Chocolate Cheesecake" label
+  { allergen: "pork", status: "may_contain", unless: /\bvegan\b|\bkosher\b|\bhalal\b/i,
+    match: /\b(gelatin|jell-?o|marshmallows?|gumm(y|ies)|panna cotta|mousse|cheesecakes?|parfaits?|trifle|aspic)\b/i },
   // alcohol
-  { allergen: "alcohol", status: "contains", unless: /\b(wine|rice|sherry|champagne) vinegar\b|\bnon[- ]?alcoholic\b/i,
-    match: /\b(wine|beer|vodka|rum|bourbon|whiske?y|sake|mirin|marsala|sherry|brandy|cognac|tequila|kahlua|amaretto|coq au vin|bourguignon|beer[- ]battered|rum cake)\b/i },
-  { allergen: "alcohol", status: "may_contain", match: /\b(tiramisu|vodka sauce|scampi|piccata|teriyaki|bulgogi|stroganoff|flambe|fondue)\b/i },
+  // Cornell labels alcohol for wine vinegars (incl. balsamic) and vanilla/flavor extracts — 19% of its labels.
+  { allergen: "alcohol", status: "contains", unless: /\bnon[- ]?alcoholic\b/i,
+    match: /\b(wine|beer|vodka|rum|bourbon|whiske?y|sake|mirin|marsala|sherry|brandy|cognac|tequila|kahlua|amaretto|coq au vin|bourguignon|beer[- ]battered|rum cake|balsamic|vanilla extract)\b/i },
+  { allergen: "alcohol", status: "may_contain",
+    match: /\b(tiramisu|vodka sauce|scampi|piccata|teriyaki|bulgogi|stroganoff|flambe|fondue|vinaigrette|pickled|vanilla|extract|italian dressing|greek dressing)\b/i },
 ];
 
 export type FloorHit = { allergen: AssessedAllergen; status: Status; matched: string };

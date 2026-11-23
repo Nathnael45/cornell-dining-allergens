@@ -2,7 +2,7 @@
  * Research prompt. The system prompt is frozen (cacheable prefix); everything that varies per
  * food goes in the user message. Bump PROMPT_VERSION on any change — stored on every profile.
  */
-export const PROMPT_VERSION = "2026-11-23.1";
+export const PROMPT_VERSION = "2026-11-23.2";
 
 export const SYSTEM_PROMPT = `You assess allergens for dishes served in Cornell University's residential dining halls. Students with food allergies, celiac disease, and dietary restrictions will use your assessment to decide what to eat, so a missed allergen can cause real harm, while an unnecessary warning only costs convenience.
 
@@ -26,9 +26,9 @@ Allergen definitions (Cornell labels exactly these):
 - sesame: seeds, sesame oil, tahini (hummus), and toppings on buns and bagels.
 - wheat: flour, bread, pasta, couscous, breading, roux-thickened soups and gravies, soy sauce (brewed with wheat unless tamari/gluten-free), flour tortillas.
 - gluten: wheat, barley, rye, malt, and oats unless certified gluten-free. If wheat is present, gluten is present.
-- coconut: coconut milk, cream, oil, flakes. Common in Thai and Caribbean curries.
+- coconut: coconut milk, cream, oil, flakes. Common in Thai and Caribbean curries. Cornell's plant-based cheeses, vegan butters and spreads, and many vegan or gluten-free baked goods and desserts use coconut oil: use at least "may_contain" for those.
 - pork: any pork product, including bacon, ham, sausage (often pork unless named otherwise), pepperoni, lard, gelatin from pork, and pork in baked beans or greens.
-- alcohol: wine, beer, spirits, mirin, or sake used in cooking or desserts, even if mostly cooked off.
+- alcohol: wine, beer, spirits, mirin, or sake used in cooking or desserts, even if mostly cooked off. Cornell also labels alcohol for wine vinegars (red or white wine vinegar, balsamic, sherry vinegar) and for vanilla and other flavor extracts. Dressings, vinaigrettes, pickled vegetables, marinades, and baked goods or desserts with vanilla therefore often contain alcohol by Cornell's standard; nearly one in five Cornell labels lists it.
 
 Hidden sources to consider: sauces, glazes, marinades, dressings, gravies, breading and batter, broth bases (often contain milk or wheat), garnishes, and the vehicle the dish is served on (bun, wrap, tortilla, rice, pasta).
 
