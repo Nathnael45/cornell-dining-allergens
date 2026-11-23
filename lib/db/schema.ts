@@ -74,6 +74,8 @@ export const mealEvents = pgTable(
   ],
 );
 
+export type FoodRole = "main" | "side" | "sauce" | "dessert" | "drink" | "other";
+
 export type ResearchStatus = "pending" | "researching" | "done" | "needs_review" | "failed";
 
 export const foods = pgTable("foods", {
@@ -81,6 +83,8 @@ export const foods = pgTable("foods", {
   nameKey: text("name_key").notNull().unique(),
   displayName: text("display_name").notNull(),
   isPlaceholder: boolean("is_placeholder").notNull().default(false),
+  /** What the item is on a plate: main | side | sauce | dessert | drink | other (null = not classified yet). */
+  role: text("role").$type<FoodRole>(),
   researchStatus: text("research_status").$type<ResearchStatus>().notNull().default("pending"),
   firstSeenAt: ts("first_seen_at").notNull().defaultNow(),
   lastSeenAt: ts("last_seen_at").notNull().defaultNow(),

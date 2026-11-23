@@ -1,7 +1,8 @@
 "use client";
 import Link from "next/link";
 import { useMemo } from "react";
-import { verdict, type Prefs } from "@/lib/allergens/buckets";
+import { rateOptions, verdict, type OptionsRating, type Prefs } from "@/lib/allergens/buckets";
+import { OptionsBadge, OptionsDot, optionsLine } from "./options";
 import type { Hall } from "@/lib/menu";
 import { usePrefs } from "./prefs";
 import { time } from "./day-nav";
@@ -11,6 +12,8 @@ type Row = {
   m: Hall["meals"][number] | undefined;
   total: number;
   counts: { fits: number; check: number; avoid: number };
+  /** Main dishes that fit (null when not filtering or not serving). */
+  options: OptionsRating | null;
   /** null when serving; otherwise why not ("Not open this day", "No dinner this day", "Closed for dinner"). */
   off: string | null;
 };
@@ -33,9 +36,15 @@ function useGroups(halls: Hall[], meal: string, prefs: Prefs | null) {
           : !items.length && m.notices.some((n) => /closed/i.test(n))
             ? `Closed for ${meal.toLowerCase()}`
             : null;
-      return { h, m, total: items.length, counts, off };
+      const options = filtering && !off && prefs ? rateOptions(items, prefs) : null;
+      return { h, m, total: items.length, counts, options, off };
     });
-    const rank = (a: Row, b: Row) => Number(!!a.off) - Number(!!b.off) || (filtering ? b.counts.fits - a.counts.fits : 0) || a.h.name.localeCompare(b.h.name);
+    // Within a campus: open halls first, then the most main dishes that fit, then the most items that fit.
+    const rank = (a: Row, b: Row) =>
+      Number(!!a.off) - Number(!!b.off) ||
+      (b.options?.mains.length ?? 0) - (a.options?.mains.length ?? 0) ||
+      (filtering ? b.counts.fits - a.counts.fits : 0) ||
+      a.h.name.localeCompare(b.h.name);
     const areas = [...AREAS, ...new Set(rows.map((r) => r.h.area ?? "Other").filter((a) => !AREAS.includes(a)))];
     return areas.map((area) => ({ area, rows: rows.filter((r) => (r.h.area ?? "Other") === area).sort(rank) })).filter((g) => g.rows.length);
   }, [halls, meal, prefs, filtering]);
@@ -78,7 +87,7 @@ export function HallList({ halls, meal, date }: { halls: Hall[]; meal: string; d
             {g.area} campus
           </h2>
           <ul className="grid gap-3 md:grid-cols-2">
-            {g.rows.map(({ h, m, total, counts, off }) => (
+            {g.rows.map(({ h, m, total, counts, options, off }) => (
               <li key={h.id}>
                 <Link
                   href={hallHref(h.slug, date, meal)}
@@ -88,11 +97,17 @@ export function HallList({ halls, meal, date }: { halls: Hall[]; meal: string; d
                   <span className="min-w-0 flex-1">
                     <span className="block font-display text-[1.15rem] leading-tight font-bold">{h.name}</span>
                     <span className="mt-0.5 block text-[0.92rem] text-muted">{off ?? `${time(m!.startsAt)} to ${time(m!.endsAt)}`}</span>
+                    {options && (
+                      <span className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <OptionsBadge level={options.level} />
+                        <span className="text-[0.85rem] text-muted">{optionsLine(options)}</span>
+                      </span>
+                    )}
                     {!off && (
                       <span className="mt-2 flex flex-wrap gap-1.5 text-[0.83rem]">
                         {filtering ? (
                           <>
-                            <span className="rounded-full bg-fit-tint px-2 py-0.5 font-bold text-fit">{counts.fits} fit you</span>
+                            <span className="rounded-full bg-avoid-tint px-2 py-0.5 text-muted">{counts.fits} items fit</span>
                             {counts.check > 0 && <span className="rounded-full bg-check-tint px-2 py-0.5 text-check">{counts.check} to check</span>}
                             {counts.avoid > 0 && <span className="rounded-full bg-avoid-tint px-2 py-0.5 text-muted">{counts.avoid} not for you</span>}
                           </>
@@ -131,7 +146,7 @@ export function HallNav({ halls, meal, date, selected }: { halls: Hall[]; meal: 
         <div key={g.area} className="mt-3">
           <h3 className="mb-1 pl-4 text-[0.82rem] font-bold text-muted">{g.area}</h3>
           <ul className="space-y-0.5">
-            {g.rows.map(({ h, counts, total, off }) => {
+            {g.rows.map(({ h, counts, total, options, off }) => {
               const on = h.slug === selected;
               return (
                 <li key={h.id}>
@@ -141,6 +156,7 @@ export function HallNav({ halls, meal, date, selected }: { halls: Hall[]; meal: 
                     title={off ?? undefined}
                     className={`flex items-center gap-2 rounded-lg border-l-4 py-1.5 pr-2 pl-3 text-[0.97rem] ${on ? "border-brand bg-brand-tint font-bold" : "border-transparent hover:bg-surface"} ${off ? "text-muted" : ""}`}
                   >
+                    {options ? <OptionsDot level={options.level} /> : <span className="size-2.5 shrink-0" />}
                     <span className="min-w-0 flex-1 truncate">{h.name}</span>
                     {off ? (
                       <span className="shrink-0 text-[0.8rem]">{off.startsWith("Not open") ? "closed" : "—"}</span>
@@ -156,7 +172,13 @@ export function HallNav({ halls, meal, date, selected }: { halls: Hall[]; meal: 
           </ul>
         </div>
       ))}
-      <p className="mt-3 text-[0.82rem] text-muted">{filtering ? "Number = items that fit you. — = not serving this meal." : "— = not serving this meal."}</p>
+      {filtering ? (
+        <p className="mt-3 text-[0.82rem] text-muted">
+          Dot = main-dish options for you (green plenty, amber limited, red none). Number = all items that fit. — = not serving this meal.
+        </p>
+      ) : (
+        <p className="mt-3 text-[0.82rem] text-muted">— = not serving this meal.</p>
+      )}
     </nav>
   );
 }

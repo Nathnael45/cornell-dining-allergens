@@ -12,6 +12,7 @@ import { PROMPT_VERSION, type ResearchInput } from "./prompt";
 import { finalize, researchFood, type ResearchOptions } from "./research";
 import { buildIndex } from "./retrieve";
 import { rateGlutenFree, type GfRating } from "./gluten";
+import { runRoleBackfill, type classifyRoles } from "./roles";
 
 const MAX_ATTEMPTS = 3;
 
@@ -78,7 +79,7 @@ export type WorkerStats = { claimed: number; done: number; needsReview: number; 
 
 export type GfFlag = { rating: GfRating; reason: string; model: string; promptVersion: string };
 
-type WorkerOptions = { limit?: number; concurrency?: number; log?: (m: string) => void; rateGf?: typeof rateGlutenFree } & ResearchOptions;
+type WorkerOptions = { limit?: number; concurrency?: number; log?: (m: string) => void; rateGf?: typeof rateGlutenFree; classify?: typeof classifyRoles } & ResearchOptions;
 
 export async function runResearchBatch(db: DB, opts: WorkerOptions = {}): Promise<WorkerStats> {
   const log = opts.log ?? (() => {});
@@ -146,6 +147,15 @@ export async function runResearchBatch(db: DB, opts: WorkerOptions = {}): Promis
       }
     }),
   );
+
+  // Classify newly seen foods as main / side / sauce… (one batched call). Optional, never fatal.
+  if (stats.done + stats.needsReview > 0) {
+    try {
+      stats.costUsd += (await runRoleBackfill(db, { ids, classify: opts.classify })).costUsd;
+    } catch (e) {
+      log(`  (role classification skipped: ${(e as Error).message})`);
+    }
+  }
   return stats;
 }
 

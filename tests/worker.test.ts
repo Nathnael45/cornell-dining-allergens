@@ -60,7 +60,8 @@ describe("runResearchBatch", () => {
       promptVersion: "test",
       usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
     });
-    const stats = await runResearchBatch(db, { call: fake.call, samples: 2, concurrency: 1, rateGf });
+    const classify = async (list: { name: string }[]) => ({ roles: new Map(list.map((x, i) => [i, x.name.includes("Soup") ? ("main" as const) : ("side" as const)])), cost: 0 });
+    const stats = await runResearchBatch(db, { call: fake.call, samples: 2, concurrency: 1, rateGf, classify });
 
     expect(stats).toMatchObject({ claimed: 3, failed: 0, official: 1, needsReview: 1, done: 2 });
     expect(await db.select().from(researchJobs)).toHaveLength(0);
@@ -86,6 +87,8 @@ describe("runResearchBatch", () => {
     // Gluten-free rating stored for researched foods, not for placeholders.
     const soupAi = (await byKey(nameKey("Broccoli Cheddar Soup"), "ai")).p as unknown as { flags: { gf: { rating: string } | null } };
     expect(soupAi.flags.gf?.rating).toBe("less_likely");
+    // Roles classified in one batch after research.
+    expect((await byKey(nameKey("Broccoli Cheddar Soup"), "ai")).f.role).toBe("main");
     const chef = (await byKey(nameKey("Chef's Choice"), "ai")).p as unknown as { flags: { gf: unknown } };
     expect(chef.flags.gf).toBeNull();
   });
@@ -97,7 +100,7 @@ describe("runResearchBatch", () => {
     const boom = async () => {
       throw new Error("API down");
     };
-    for (let i = 0; i < 4; i++) await runResearchBatch(db, { call: boom });
+    for (let i = 0; i < 4; i++) await runResearchBatch(db, { call: boom, classify: async () => ({ roles: new Map(), cost: 0 }) });
     const [job] = await db.select().from(researchJobs);
     expect(job).toMatchObject({ attempts: 3, lastError: "API down" });
     const [f] = await db.select().from(foods).where(eq(foods.id, one.foodId));

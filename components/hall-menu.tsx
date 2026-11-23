@@ -1,6 +1,7 @@
 "use client";
 import { useMemo, useState } from "react";
-import { GF_LABEL, LABEL, verdict, type CompactItem, type Prefs, type Verdict } from "@/lib/allergens/buckets";
+import { GF_LABEL, LABEL, rateOptions, verdict, type CompactItem, type Prefs, type Verdict } from "@/lib/allergens/buckets";
+import { OptionsSummary } from "./options";
 import type { Resolved, Source } from "@/lib/allergens/resolve";
 import { ASSESSED_ALLERGENS, type AssessedAllergen } from "@/lib/allergens/status";
 import type { Meal } from "@/lib/menu";
@@ -16,12 +17,15 @@ export function HallMenu({ meal, eateryId }: { meal: Meal; eateryId: number }) {
     return <p className="py-10 text-muted">{meal.notices.length ? meal.notices.join(". ") : "No menu has been posted for this meal yet."}</p>;
   }
   return (
+    <>
+      {filtering && <OptionsSummary o={rateOptions(meal.stations.flatMap((s) => s.items), prefs)} meal={meal.meal} />}
     <div className="pt-5 xl:columns-2 xl:gap-4 [&>*]:mb-4 [&>*]:break-inside-avoid">
       {meal.notices.length > 0 && <p className="rounded-2xl bg-check-tint px-4 py-3 text-[0.95rem] text-check">{meal.notices.join(". ")}</p>}
       {meal.stations.map((s) => (
         <StationPanel key={s.name} name={s.name} items={s.items} prefs={prefs} filtering={filtering} eateryId={eateryId} />
       ))}
     </div>
+    </>
   );
 }
 
@@ -63,6 +67,8 @@ const PILL = {
   avoid: { cls: "bg-avoid-tint text-muted", text: "Not for you", icon: "✕" },
 } as const;
 
+const ROLE_TAG: Record<string, string> = { side: "side", sauce: "sauce / topping", dessert: "dessert", drink: "drink", other: "other" };
+
 const GF_STYLE: Record<string, string> = { d: "text-fit", l: "text-fit", s: "text-check", u: "text-muted" };
 
 function ItemRow(props: { item: CompactItem; v: Verdict; prefs: Prefs; filtering: boolean; eateryId: number; station: string }) {
@@ -89,7 +95,10 @@ function ItemRow(props: { item: CompactItem; v: Verdict; prefs: Prefs; filtering
     <li className="border-t border-rule first:border-t-0">
       <button type="button" aria-expanded={open} onClick={toggle} className="flex w-full items-start gap-3 px-4 py-3 text-left">
         <span className="min-w-0 flex-1">
-          <span className={`block text-[1.04rem] leading-snug ${avoided ? "text-muted line-through decoration-1" : ""}`}>{item.name}</span>
+          <span className={`block text-[1.04rem] leading-snug ${avoided ? "text-muted line-through decoration-1" : ""}`}>
+            {item.name}
+            {item.role && item.role !== "main" && <span className="ml-2 rounded bg-avoid-tint px-1.5 py-px align-middle text-[0.75rem] text-muted no-underline">{ROLE_TAG[item.role] ?? item.role}</span>}
+          </span>
           <span className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-[0.88rem]">
             {showGf && (
               <span className={GF_STYLE[gf]}>

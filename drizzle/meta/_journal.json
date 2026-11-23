@@ -15,6 +15,13 @@
       "when": 1795447468590,
       "tag": "0001_meal_notices",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1795462653087,
+      "tag": "0002_food_role",
+      "breakpoints": true
     }
   ]
 }

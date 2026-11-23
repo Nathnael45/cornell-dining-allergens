@@ -12,6 +12,7 @@ import { parseEateries } from "@/lib/cornell/dining-api";
 import { ingestSnapshot } from "@/lib/ingest/ingest";
 import { runMenuIngest, runNetNutritionSync } from "@/lib/jobs";
 import { refloorPlaceholders, runGlutenBackfill, runResearchBatch } from "@/lib/research/worker";
+import { runRoleBackfill } from "@/lib/research/roles";
 
 async function main() {
   const [cmd, arg] = process.argv.slice(2);
@@ -48,6 +49,12 @@ async function main() {
     case "gluten": {
       // Add gluten-free likelihood ratings to researched foods missing one (~$0.001 each).
       const stats = await runGlutenBackfill(db, { limit: Number(arg ?? 100), log: (m) => console.error(m) });
+      console.log(JSON.stringify({ ...stats, costUsd: Number(stats.costUsd.toFixed(3)) }));
+      break;
+    }
+    case "roles": {
+      // Classify foods as main / side / sauce / dessert / drink (batched, ~$0.005 per 25 foods).
+      const stats = await runRoleBackfill(db, { limit: Number(arg ?? 1000), log: (m) => console.error(m) });
       console.log(JSON.stringify({ ...stats, costUsd: Number(stats.costUsd.toFixed(3)) }));
       break;
     }

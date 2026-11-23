@@ -27,7 +27,9 @@
     "gluten": "tsx scripts/cli.ts gluten",
     "prod:gluten": "tsx --env-file=.env.neon scripts/cli.ts gluten",
     "refloor": "tsx scripts/cli.ts refloor",
-    "prod:refloor": "tsx --env-file=.env.neon scripts/cli.ts refloor"
+    "prod:refloor": "tsx --env-file=.env.neon scripts/cli.ts refloor",
+    "roles": "tsx scripts/cli.ts roles",
+    "prod:roles": "tsx --env-file=.env.neon scripts/cli.ts roles"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

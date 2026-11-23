@@ -23,6 +23,8 @@ export type CompactItem = {
   fried?: boolean;
   /** Gluten-free likelihood: d/l/s/u = definitely/likely/less likely/unlikely; UPPERCASE = Cornell-verified. */
   gf?: string;
+  /** main | side | sauce | dessert | drink | other (undefined = not classified; treated as a main). */
+  role?: string;
 };
 
 const GF_CHAR = { definitely: "d", likely: "l", less_likely: "s", unlikely: "u" } as const;
@@ -96,3 +98,32 @@ export function verdict(item: CompactItem, prefs: Prefs): Verdict {
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
 
 export const GF_LABEL: Record<string, string> = { d: "definitely", l: "likely", s: "less likely", u: "unlikely" };
+
+/** How many real meal options a hall has for someone, counting MAIN dishes that fit (not sides). */
+export type OptionsLevel = "plenty" | "some" | "limited" | "none";
+export type OptionsRating = { level: OptionsLevel; mains: CompactItem[]; mainsToCheck: number; sides: number };
+
+export const OPTIONS_LABEL: Record<OptionsLevel, string> = {
+  plenty: "Plenty of options",
+  some: "Some options",
+  limited: "Limited options",
+  none: "No main dishes",
+};
+
+export const isMain = (it: CompactItem) => it.role === undefined || it.role === "main";
+
+export function rateOptions(items: CompactItem[], prefs: Prefs): OptionsRating {
+  const mains: CompactItem[] = [];
+  let mainsToCheck = 0;
+  let sides = 0;
+  for (const it of items) {
+    const b = verdict(it, prefs).bucket;
+    if (isMain(it)) {
+      if (b === "fits") mains.push(it);
+      else if (b === "check") mainsToCheck++;
+    } else if (it.role === "side" && b === "fits") sides++;
+  }
+  const n = mains.length;
+  const level: OptionsLevel = n >= 4 ? "plenty" : n >= 2 ? "some" : n === 1 ? "limited" : "none";
+  return { level, mains, mainsToCheck, sides };
+}

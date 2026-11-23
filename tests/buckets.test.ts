@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { encode, verdict, type CompactItem, type Prefs } from "@/lib/allergens/buckets";
+import { encode, rateOptions, verdict, type CompactItem, type Prefs } from "@/lib/allergens/buckets";
 import { resolve, type StoredProfile } from "@/lib/allergens/resolve";
 import { ASSESSED_ALLERGENS, type Assertion, type Status } from "@/lib/allergens/status";
 
@@ -108,5 +108,31 @@ describe("obvious gluten is never missed", () => {
     p.allergens.gluten.reason = 'keyword floor (name): "breaded"';
     p.flags = { kind: "researched", gf: { rating: "likely", reason: "model said so" } };
     expect(resolve(p, null, ctx).gf).toMatchObject({ rating: "less_likely", reason: "contains breaded" });
+  });
+});
+
+describe("options rating (main dishes that fit)", () => {
+  const it_ = (name: string, role: string, over: Partial<Record<string, Status>> = {}) => ({ ...item(stored(over)), name, role });
+  const lunch = [
+    it_("Cuban Black Beans", "main"),
+    it_("Mac & Cheese", "main", { milk: "contains" }),
+    it_("Jasmine Rice", "side"),
+    it_("Broccoli", "side"),
+    it_("Hoisin Mayo", "sauce"),
+  ];
+
+  it("counts only main dishes that fit; sides don't make a meal", () => {
+    const r = rateOptions(lunch, prefs({ avoid: ["milk"] }));
+    expect(r.level).toBe("limited");
+    expect(r.mains.map((m) => m.name)).toEqual(["Cuban Black Beans"]);
+    expect(r.sides).toBe(2);
+    expect(rateOptions(lunch.filter((x) => x.role !== "main"), prefs({ avoid: ["milk"] })).level).toBe("none");
+  });
+
+  it("uses 4+ / 2-3 / 1 / 0 thresholds, and counts unclassified items as mains", () => {
+    const mains = (n: number) => Array.from({ length: n }, (_, i) => it_(`m${i}`, "main"));
+    expect(rateOptions(mains(4), prefs({ avoid: ["milk"] })).level).toBe("plenty");
+    expect(rateOptions(mains(2), prefs({ avoid: ["milk"] })).level).toBe("some");
+    expect(rateOptions([{ ...item(stored()), role: undefined }], prefs({ avoid: ["milk"] })).level).toBe("limited");
   });
 });

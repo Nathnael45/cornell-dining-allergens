@@ -98,6 +98,7 @@ export async function getDay(date: string): Promise<Day> {
       foodId: foods.id,
       name: foods.displayName,
       placeholder: foods.isPlaceholder,
+      role: foods.role,
     })
     .from(menuItems)
     .innerJoin(stations, eq(stations.id, menuItems.stationId))
@@ -113,7 +114,14 @@ export async function getDay(date: string): Promise<Day> {
       const p = profiles.get(it.foodId) ?? { ai: null, official: null };
       const r = resolve(p.ai, p.official, { eateryId: ev.eateryId, station: it.station });
       const st = byStation.get(it.station) ?? { name: it.station, items: [] };
-      st.items.push({ id: it.foodId, name: it.name, ...encode(r), placeholder: it.placeholder || r.placeholder || undefined, fried: r.fried || undefined });
+      st.items.push({
+        id: it.foodId,
+        name: it.name,
+        ...encode(r),
+        placeholder: it.placeholder || r.placeholder || undefined,
+        fried: r.fried || undefined,
+        role: it.role ?? undefined,
+      });
       byStation.set(it.station, st);
     }
     hall.meals.push({
