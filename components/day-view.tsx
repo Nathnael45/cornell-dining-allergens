@@ -31,7 +31,8 @@ export async function DayView({ sp, slug }: { sp: SP; slug?: string }) {
   const day = await getDay(date);
   const hall = slug ? day.halls.find((h) => h.slug === slug) : undefined;
 
-  const mealSource = hall ? hall.meals : day.halls.flatMap((h) => h.meals);
+  // A hall with nothing posted (e.g. closed for a break) still gets the day's meal switch.
+  const mealSource = hall?.meals.length ? hall.meals : day.halls.flatMap((h) => h.meals);
   const meals = ["Breakfast", "Brunch", "Lunch", "Dinner"].filter((m) => mealSource.some((x) => x.meal === m));
   const ends = Object.fromEntries(meals.map((m) => [m, mealSource.filter((x) => x.meal === m).map((x) => x.endsAt).sort().at(-1)!]));
   const meal = pickMeal(meals, ends, typeof sp.meal === "string" ? sp.meal : undefined, date === today, new Date());
@@ -60,9 +61,17 @@ export async function DayView({ sp, slug }: { sp: SP; slug?: string }) {
               <h1 className="pt-2 font-display text-[2rem] leading-tight font-bold lg:pt-6">{hall.name}</h1>
               <p className="text-muted">
                 {hall.area ? `${hall.area} campus, ` : ""}
-                {current ? `${meal.toLowerCase()} ${time(current.startsAt)} to ${time(current.endsAt)}` : `no ${meal.toLowerCase()} today`}
+                {current ? `${meal.toLowerCase()} ${time(current.startsAt)} to ${time(current.endsAt)}` : hall.meals.length ? `no ${meal.toLowerCase()} this day` : "not open this day"}
               </p>
-              {current ? <HallMenu meal={current} eateryId={hall.id} /> : <p className="py-8 text-muted">This hall isn&apos;t serving {meal.toLowerCase()} on this day.</p>}
+              {current ? (
+                <HallMenu meal={current} eateryId={hall.id} />
+              ) : (
+                <p className="py-8 text-muted">
+                  {hall.meals.length
+                    ? `${hall.name} isn't serving ${meal.toLowerCase()} on this day.`
+                    : `Cornell hasn't posted any meals at ${hall.name} for this day. It may be closed (for example, over a break).`}
+                </p>
+              )}
             </>
           )}
           {!slug && <HallList halls={day.halls} meal={meal} date={date} />}

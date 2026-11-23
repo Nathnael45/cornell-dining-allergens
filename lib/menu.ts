@@ -80,7 +80,14 @@ export async function getDay(date: string): Promise<Day> {
     .innerJoin(eateries, eq(eateries.id, mealEvents.eateryId))
     .where(and(eq(mealEvents.serviceDate, date), eq(eateries.isDiningRoom, true), inArray(mealEvents.meal, [...MEALS_IN_SCOPE])))
     .orderBy(asc(mealEvents.startsAt));
-  if (!events.length) return { date, halls: [], meals: [] };
+
+  // Every dining room is listed, even when it serves nothing that day (e.g. closed for a break).
+  const rooms = await db
+    .select({ id: eateries.id, slug: eateries.slug, name: eateries.name, area: eateries.campusArea })
+    .from(eateries)
+    .where(eq(eateries.isDiningRoom, true));
+  const halls = new Map<number, Hall>(rooms.map((r) => [r.id, { ...r, meals: [] }]));
+  if (!events.length) return { date, halls: [...halls.values()].sort((a, b) => a.name.localeCompare(b.name)), meals: [] };
 
   const items = await db
     .select({
@@ -99,7 +106,6 @@ export async function getDay(date: string): Promise<Day> {
     .orderBy(asc(menuItems.stationSortIdx), asc(menuItems.sortIdx), sql`${foods.displayName}`);
 
   const profiles = await currentProfiles([...new Set(items.map((i) => i.foodId))]);
-  const halls = new Map<number, Hall>();
   for (const ev of events) {
     const hall = halls.get(ev.eateryId) ?? { id: ev.eateryId, slug: ev.slug, name: ev.name, area: ev.area, meals: [] };
     const byStation = new Map<string, Station>();
