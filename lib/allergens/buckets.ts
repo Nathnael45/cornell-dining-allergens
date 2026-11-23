@@ -21,9 +21,13 @@ export type CompactItem = {
   diet: string;
   placeholder?: boolean;
   fried?: boolean;
+  /** Gluten-free likelihood: d/l/s/u = definitely/likely/less likely/unlikely; UPPERCASE = Cornell-verified. */
+  gf?: string;
 };
 
-export function encode(r: Resolved): { code: Code; diet: string } {
+const GF_CHAR = { definitely: "d", likely: "l", less_likely: "s", unlikely: "u" } as const;
+
+export function encode(r: Resolved): { code: Code; diet: string; gf?: string } {
   const code = ASSESSED_ALLERGENS.map((a) => {
     const x = r.allergens[a];
     if (x.status === "contains") return "C";
@@ -33,7 +37,8 @@ export function encode(r: Resolved): { code: Code; diet: string } {
     return x.confidence >= FITS_CONFIDENCE ? "A" : "L";
   }).join("");
   const d = (v: string) => (v === "yes" ? "y" : v === "no" ? "n" : "u");
-  return { code, diet: d(r.diets.vegetarian) + d(r.diets.vegan) };
+  const gf = r.gf ? (r.gf.source === "ai" ? GF_CHAR[r.gf.rating] : GF_CHAR[r.gf.rating].toUpperCase()) : undefined;
+  return { code, diet: d(r.diets.vegetarian) + d(r.diets.vegan), gf };
 }
 
 export type Diet = "vegetarian" | "vegan";
@@ -61,6 +66,15 @@ export function verdict(item: CompactItem, prefs: Prefs): Verdict {
   const avoid: string[] = [];
   const check: string[] = [];
   for (const a of prefs.avoid) {
+    // Gluten uses the recipe-based gluten-free rating (cross-contact deliberately ignored).
+    if (a === "gluten" && item.gf) {
+      const g = item.gf.toLowerCase();
+      const verified = item.gf !== g;
+      if (g === "u") avoid.push("Usually contains gluten");
+      else if (g === "s") check.push("Gluten-free less likely");
+      else if (prefs.strict && !verified) check.push("Gluten-free not verified by Cornell");
+      continue;
+    }
     const c = item.code[ASSESSED_ALLERGENS.indexOf(a)];
     if (c === "C") avoid.push(`Contains ${LABEL[a]}`);
     else if (c === "M") check.push(`May contain ${LABEL[a]}`);
@@ -80,3 +94,5 @@ export function verdict(item: CompactItem, prefs: Prefs): Verdict {
 }
 
 const cap = (s: string) => s[0].toUpperCase() + s.slice(1);
+
+export const GF_LABEL: Record<string, string> = { d: "definitely", l: "likely", s: "less likely", u: "unlikely" };

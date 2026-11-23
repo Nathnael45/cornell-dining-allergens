@@ -22,7 +22,10 @@
     "ai:check": "tsx scripts/ai-check.ts",
     "eval": "tsx eval/eval.ts",
     "research": "tsx scripts/cli.ts research",
-    "prod:research": "tsx --env-file=.env.neon scripts/cli.ts research"
+    "prod:research": "tsx --env-file=.env.neon scripts/cli.ts research",
+    "eval:gluten": "tsx eval/gluten.ts",
+    "gluten": "tsx scripts/cli.ts gluten",
+    "prod:gluten": "tsx --env-file=.env.neon scripts/cli.ts gluten"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.12.0",

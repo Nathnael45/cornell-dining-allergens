@@ -8,6 +8,8 @@
  */
 import { ASSESSED_ALLERGENS, SEVERITY, type AssessedAllergen, type Assertion, type DietAnswer, type Status } from "./status";
 
+export type GfRating = "definitely" | "likely" | "less_likely" | "unlikely";
+
 export type Source = "ai" | "official" | "policy" | "none";
 export type ResolvedAssertion = Assertion & { source: Source };
 export type Resolved = {
@@ -17,12 +19,14 @@ export type Resolved = {
   fried: boolean;
   researched: boolean;
   likelyIngredients: string[];
+  /** How likely the dish is gluten-free by recipe (cross-contact ignored). null = can't say. */
+  gf: { rating: GfRating; reason: string; source: Source } | null;
 };
 
 export type StoredProfile = {
   allergens: Record<string, Assertion>;
   diets: { vegetarian?: DietAnswer; vegan?: DietAnswer } | null;
-  flags: { kind?: string; fried?: boolean } | null;
+  flags: { kind?: string; fried?: boolean; gf?: { rating: GfRating; reason: string } | null } | null;
   likelyIngredients: string[] | null;
 };
 
@@ -54,10 +58,25 @@ export function resolve(ai: StoredProfile | null, official: StoredProfile | null
   }
   return {
     allergens,
+    gf: glutenFree(ai, official, allergens),
     diets: { vegetarian: ai?.diets?.vegetarian ?? "unsure", vegan: ai?.diets?.vegan ?? "unsure" },
     placeholder: ai?.flags?.kind === "placeholder" || ai?.flags?.kind === "not_food",
     fried: !!ai?.flags?.fried,
     researched: !!ai,
     likelyIngredients: ai?.likelyIngredients ?? [],
   };
+}
+
+/** Certification > Cornell label > recipe estimate > fallback from the gluten status. */
+function glutenFree(ai: StoredProfile | null, official: StoredProfile | null, allergens: Resolved["allergens"]): Resolved["gf"] {
+  const g = allergens.gluten;
+  if (g.source === "policy") return { rating: "definitely", reason: g.reason, source: "policy" };
+  const off = official?.allergens.gluten?.status;
+  if (off === "contains") return { rating: "unlikely", reason: "Cornell's label lists gluten", source: "official" };
+  if (off === "free") return { rating: "definitely", reason: "Cornell's label lists no gluten", source: "official" };
+  if (!ai || ai.flags?.kind === "placeholder" || ai.flags?.kind === "not_food") return null;
+  if (ai.flags?.gf) return { ...ai.flags.gf, source: "ai" };
+  const fallback: Partial<Record<Status, GfRating>> = { contains: "unlikely", may_contain: "less_likely", free: "likely" };
+  const rating = fallback[g.status];
+  return rating ? { rating, reason: g.reason, source: "ai" } : null;
 }

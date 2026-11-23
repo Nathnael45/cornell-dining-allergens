@@ -11,6 +11,7 @@ import { officialProfile } from "./official";
 import { PROMPT_VERSION, type ResearchInput } from "./prompt";
 import { researchFood, type ResearchOptions } from "./research";
 import { buildIndex } from "./retrieve";
+import { rateGlutenFree, type GfRating } from "./gluten";
 
 const MAX_ATTEMPTS = 3;
 
@@ -75,8 +76,13 @@ async function saveProfile(db: DB, foodId: number, values: Omit<typeof allergenP
 
 export type WorkerStats = { claimed: number; done: number; needsReview: number; failed: number; official: number; costUsd: number };
 
-export async function runResearchBatch(db: DB, opts: { limit?: number; concurrency?: number; log?: (m: string) => void } & ResearchOptions = {}): Promise<WorkerStats> {
+export type GfFlag = { rating: GfRating; reason: string; model: string; promptVersion: string };
+
+type WorkerOptions = { limit?: number; concurrency?: number; log?: (m: string) => void; rateGf?: typeof rateGlutenFree } & ResearchOptions;
+
+export async function runResearchBatch(db: DB, opts: WorkerOptions = {}): Promise<WorkerStats> {
   const log = opts.log ?? (() => {});
+  const rateGf = opts.rateGf ?? rateGlutenFree;
   const labels = await db.select().from(netnutritionItems);
   const search = buildIndex(labels);
   const ids = await claim(db, opts.limit ?? 25);
@@ -99,10 +105,22 @@ export async function runResearchBatch(db: DB, opts: { limit?: number; concurren
           const r = await researchFood(input, opts);
           const model = r.models.join(",") || null;
           stats.costUsd += costUsd(r.models[0] ?? RESEARCH_MODEL, r.usage);
+
+          // Gluten-free likelihood (recipe-based). Optional: a failure here never blocks the profile.
+          let gf: GfFlag | null = null;
+          if (r.kind === "researched") {
+            try {
+              const g = await rateGf({ name: input.name, servedAt: input.servedAt, likelyIngredients: r.profile.likelyIngredients, references: input.references });
+              gf = { rating: g.rating, reason: g.reason, model: g.model, promptVersion: g.promptVersion };
+              stats.costUsd += costUsd(g.model, g.usage);
+            } catch (e) {
+              log(`  (no gluten-free rating for ${input.name}: ${(e as Error).message})`);
+            }
+          }
           await saveProfile(db, foodId, {
             source: "ai",
             ...row(r.profile),
-            flags: { kind: r.kind, fried: r.profile.fried, treeNutTypes: r.profile.treeNutTypes, hardDisagreements: r.hardDisagreements, floorHits: r.floorHits },
+            flags: { kind: r.kind, fried: r.profile.fried, treeNutTypes: r.profile.treeNutTypes, hardDisagreements: r.hardDisagreements, floorHits: r.floorHits, gf },
             reasoning: r.runs.length ? `${r.runs.length} runs merged conservatively; floor hits: ${r.floorHits.map((h) => `${h.allergen}:${h.matched}`).join(", ") || "none"}` : r.kind,
             model,
             promptVersion: PROMPT_VERSION,
@@ -124,6 +142,51 @@ export async function runResearchBatch(db: DB, opts: { limit?: number; concurren
             .returning({ attempts: researchJobs.attempts });
           if (job && job.attempts >= MAX_ATTEMPTS) await db.update(foods).set({ researchStatus: "failed" }).where(eq(foods.id, foodId));
           log(`! food ${foodId}: ${msg}`);
+        }
+      }
+    }),
+  );
+  return stats;
+}
+
+/** Add gluten-free ratings to already-researched foods that don't have one yet. */
+export async function runGlutenBackfill(db: DB, opts: { limit?: number; concurrency?: number; log?: (m: string) => void; rateGf?: typeof rateGlutenFree } = {}) {
+  const log = opts.log ?? (() => {});
+  const rateGf = opts.rateGf ?? rateGlutenFree;
+  const rows = await db
+    .select({ id: allergenProfiles.id, foodId: allergenProfiles.foodId, name: foods.displayName, likely: allergenProfiles.likelyIngredients })
+    .from(allergenProfiles)
+    .innerJoin(foods, eq(foods.id, allergenProfiles.foodId))
+    .where(
+      and(
+        eq(allergenProfiles.source, "ai"),
+        eq(allergenProfiles.isCurrent, true),
+        sql`${allergenProfiles.flags}->>'kind' = 'researched'`,
+        sql`${allergenProfiles.flags}->'gf' is null or ${allergenProfiles.flags}->'gf' = 'null'::jsonb`,
+      ),
+    )
+    .limit(opts.limit ?? 100);
+  const labels = await db.select().from(netnutritionItems);
+  const search = buildIndex(labels);
+  const stats = { rated: 0, failed: 0, costUsd: 0 };
+  const queue = [...rows];
+  await Promise.all(
+    Array.from({ length: opts.concurrency ?? 6 }, async () => {
+      for (let p = queue.shift(); p; p = queue.shift()) {
+        try {
+          const references = search(p.name, 3).map((r) => ({ name: r.name, contains: r.hasContainsLine ? r.containsRaw : null }));
+          const g = await rateGf({ name: p.name, likelyIngredients: p.likely ?? [], references });
+          const gf: GfFlag = { rating: g.rating, reason: g.reason, model: g.model, promptVersion: g.promptVersion };
+          await db
+            .update(allergenProfiles)
+            .set({ flags: sql`${allergenProfiles.flags} || ${JSON.stringify({ gf })}::jsonb` })
+            .where(eq(allergenProfiles.id, p.id));
+          stats.rated++;
+          stats.costUsd += costUsd(g.model, g.usage);
+          log(`${g.rating.padEnd(11)} ${p.name}`);
+        } catch (e) {
+          stats.failed++;
+          log(`! ${p.name}: ${(e as Error).message}`);
         }
       }
     }),

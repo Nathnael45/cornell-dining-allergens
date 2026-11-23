@@ -509,6 +509,19 @@ confidence ≥ 0.8, scored against Cornell's `Contains:` lines.
 - Caveats: rare allergens have small counts (shellfish 0–3 positives, coconut 8–10); the gold set is retail
   café food, not dining-hall food; Cornell's own labels have errors (§12).
 
+### Gluten-free likelihood (added 2026‑11‑23, user request)
+
+Users found the gluten status too conservative (it counted cross-contact). Each researched food now also
+gets a **recipe-only** rating — `definitely` / `likely` / `less likely` / `unlikely` gluten-free — from a
+small separate call (`lib/research/gluten.ts`, ~$0.001/food), ignoring cross-contamination by design.
+Cornell certification (Risley) → definitely; Cornell label lists gluten → unlikely / lists none → definitely;
+otherwise the estimate. When a user avoids gluten: definitely/likely → fits, less likely → check,
+unlikely → not for you (strict mode still requires Cornell verification).
+
+Check vs Cornell labels (`npm run eval:gluten`, 100 dishes, $0.08): of 69 dishes Cornell lists with gluten,
+64 rated unlikely, 4 less likely, **1 likely** (Coconut Macaroon — Cornell's recipe adds flour); all 31
+gluten-free dishes rated definitely (13) or likely (18).
+
 ## 10. Roadmap
 
 | Phase | Deliverable | Done when |

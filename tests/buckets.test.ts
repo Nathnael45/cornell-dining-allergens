@@ -55,3 +55,38 @@ describe("verdict", () => {
     expect(verdict(item(null), prefs({ avoid: ["egg"] })).bucket).toBe("check");
   });
 });
+
+describe("gluten-free likelihood", () => {
+  const withGf = (rating: "definitely" | "likely" | "less_likely" | "unlikely", gluten: Status = "may_contain") => {
+    const p = stored({ gluten, wheat: gluten });
+    p.flags = { kind: "researched", gf: { rating, reason: "" } };
+    return p;
+  };
+
+  it("replaces the cautious gluten status when the user avoids gluten", () => {
+    expect(verdict(item(withGf("likely")), prefs({ avoid: ["gluten"] })).bucket).toBe("fits");
+    expect(verdict(item(withGf("definitely")), prefs({ avoid: ["gluten"] })).bucket).toBe("fits");
+    expect(verdict(item(withGf("less_likely")), prefs({ avoid: ["gluten"] }))).toEqual({ bucket: "check", notes: ["Gluten-free less likely"] });
+    expect(verdict(item(withGf("unlikely", "contains")), prefs({ avoid: ["gluten"] }))).toEqual({ bucket: "avoid", notes: ["Usually contains gluten"] });
+    // Wheat is still judged by its own status.
+    expect(verdict(item(withGf("likely")), prefs({ avoid: ["wheat"] })).bucket).toBe("check");
+  });
+
+  it("Cornell labels and certifications override the estimate", () => {
+    expect(resolve(withGf("likely"), stored({ gluten: "contains" }), ctx).gf).toMatchObject({ rating: "unlikely", source: "official" });
+    expect(resolve(withGf("unlikely", "contains"), null, { eateryId: 4, station: "Pizza" }).gf).toMatchObject({ rating: "definitely", source: "policy" });
+    expect(item(withGf("likely"), stored()).gf).toBe("D");
+  });
+
+  it("strict mode needs Cornell verification for gluten too", () => {
+    expect(verdict(item(withGf("definitely")), prefs({ avoid: ["gluten"], strict: true })).bucket).toBe("check");
+    expect(verdict(item(withGf("definitely"), stored()), prefs({ avoid: ["gluten"], strict: true })).bucket).toBe("fits");
+  });
+
+  it("falls back to the gluten status for foods without a rating, and says nothing for placeholders", () => {
+    expect(resolve(stored({ gluten: "contains" }), null, ctx).gf?.rating).toBe("unlikely");
+    const ph = stored();
+    ph.flags = { kind: "placeholder" };
+    expect(resolve(ph, null, ctx).gf).toBeNull();
+  });
+});

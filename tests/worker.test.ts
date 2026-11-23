@@ -53,7 +53,14 @@ describe("runResearchBatch", () => {
 
     // Run 1 says the curry is soy-free, run 2 says it contains soy → hard disagreement.
     const fake = fakeModel((input, s) => (input.name.startsWith("Thai") ? { soy: s === 0 ? "free" : "contains" } : {}));
-    const stats = await runResearchBatch(db, { call: fake.call, samples: 2, concurrency: 1 });
+    const rateGf = async (i: { name: string }) => ({
+      rating: (i.name.includes("Soup") ? "less_likely" : "definitely") as "less_likely" | "definitely",
+      reason: "fake",
+      model: "fake",
+      promptVersion: "test",
+      usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0 },
+    });
+    const stats = await runResearchBatch(db, { call: fake.call, samples: 2, concurrency: 1, rateGf });
 
     expect(stats).toMatchObject({ claimed: 3, failed: 0, official: 1, needsReview: 1, done: 2 });
     expect(await db.select().from(researchJobs)).toHaveLength(0);
@@ -76,6 +83,11 @@ describe("runResearchBatch", () => {
     expect(curry.f.researchStatus).toBe("needs_review");
     expect(curry.p.allergens.soy.status).toBe("contains");
     expect((await byKey(nameKey("Chef's Choice"), "ai")).p.allergens.milk.status).toBe("unknown");
+    // Gluten-free rating stored for researched foods, not for placeholders.
+    const soupAi = (await byKey(nameKey("Broccoli Cheddar Soup"), "ai")).p as unknown as { flags: { gf: { rating: string } | null } };
+    expect(soupAi.flags.gf?.rating).toBe("less_likely");
+    const chef = (await byKey(nameKey("Chef's Choice"), "ai")).p as unknown as { flags: { gf: unknown } };
+    expect(chef.flags.gf).toBeNull();
   });
 
   it("records failures and stops retrying after 3 attempts", async () => {

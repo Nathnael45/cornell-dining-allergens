@@ -13,31 +13,31 @@ export function dayLabel(date: string, today: string): string {
 export const time = (iso: string) =>
   new Date(iso).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", timeZone: TZ }).replace(":00", "").toLowerCase();
 
-/** Date pills + meal tabs. Plain links, so the URL is shareable ("dinner at Morrison tomorrow"). */
+/** Day pills + a segmented meal switch, styled for the header band. Plain links → shareable URLs. */
 export function DayNav({ base, dates, date, today, meals, meal }: { base: string; dates: string[]; date: string; today: string; meals: string[]; meal: string }) {
   const href = (d: string, m?: string) => `${base}?date=${d}${m ? `&meal=${m.toLowerCase()}` : ""}`;
   return (
-    <nav aria-label="Day and meal" className="mt-4 space-y-3">
-      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 pb-1">
+    <nav aria-label="Day and meal" className="space-y-3 pt-3 pb-5">
+      <div className="-mx-4 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none]">
         {dates.map((d) => (
           <Link
             key={d}
             href={href(d)}
             aria-current={d === date ? "date" : undefined}
-            className={`shrink-0 rounded-full px-3.5 py-1.5 text-[0.95rem] ${d === date ? "bg-ink text-paper" : "bg-surface text-ink ring-1 ring-rule"}`}
+            className={`shrink-0 rounded-full px-3.5 py-1.5 text-[0.95rem] ${d === date ? "bg-band-ink font-bold text-band" : "text-band-muted ring-1 ring-white/15"}`}
           >
             {dayLabel(d, today)}
           </Link>
         ))}
       </div>
       {meals.length > 0 && (
-        <div className="flex border-b border-rule">
+        <div className="flex rounded-2xl bg-band-2 p-1 ring-1 ring-white/10">
           {meals.map((m) => (
             <Link
               key={m}
               href={href(date, m)}
               aria-current={m === meal ? "page" : undefined}
-              className={`-mb-px border-b-[3px] px-3 py-2 text-[1.05rem] ${m === meal ? "border-ink font-bold" : "border-transparent text-muted"}`}
+              className={`flex-1 rounded-xl py-2 text-center text-[1rem] ${m === meal ? "bg-accent font-bold text-accent-ink" : "text-band-ink"}`}
             >
               {m}
             </Link>

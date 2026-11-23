@@ -1,10 +1,12 @@
 import type { Metadata, Viewport } from "next";
 import Link from "next/link";
-import { Atkinson_Hyperlegible_Next } from "next/font/google";
+import { Atkinson_Hyperlegible_Next, Bricolage_Grotesque } from "next/font/google";
 import "./globals.css";
 
-// Designed by the Braille Institute for legibility — right for quick reading on a phone in line.
+// Body: designed by the Braille Institute for legibility (quick reading in line, on a phone).
 const atkinson = Atkinson_Hyperlegible_Next({ variable: "--font-atkinson", subsets: ["latin"] });
+// Display: hall names, the restriction sentence, counts.
+const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Cornell dining, filtered",
@@ -13,39 +15,33 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f6f8f7" },
-    { media: "(prefers-color-scheme: dark)", color: "#141b1e" },
+    { media: "(prefers-color-scheme: light)", color: "#12352f" },
+    { media: "(prefers-color-scheme: dark)", color: "#0e2420" },
   ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${atkinson.variable} antialiased`}>
+    <html lang="en" className={`${atkinson.variable} ${bricolage.variable} antialiased`}>
       <body className="min-h-dvh bg-paper text-ink">
-        <div className="mx-auto flex min-h-dvh w-full max-w-2xl flex-col px-4">
-          <header className="pt-5 pb-2">
-            <Link href="/" className="text-[0.95rem] font-bold tracking-tight">
-              <span className="text-carnelian">Cornell</span> dining, filtered
+        <main>{children}</main>
+        <footer className="mx-auto max-w-2xl px-4 pt-10 pb-12 text-[0.9rem] text-muted">
+          <p className="max-w-prose">
+            Allergen information here is estimated from menu names and Cornell&apos;s nutrition labels. It can be wrong, and recipes
+            change. Always check the card at the station or ask staff. With a severe allergy, talk to Cornell Dining&apos;s dietitians at{" "}
+            <a className="underline" href="mailto:diningnutrition@cornell.edu">
+              diningnutrition@cornell.edu
+            </a>
+            .
+          </p>
+          <p className="mt-3">
+            <Link className="underline" href="/status">
+              Data status
             </Link>
-          </header>
-          <main className="flex-1">{children}</main>
-          <footer className="mt-12 border-t border-rule py-6 text-sm text-muted">
-            <p className="max-w-prose">
-              Allergen information here is estimated from menu names and Cornell&apos;s nutrition labels. It can be wrong, and recipes
-              change. Always check the card at the station or ask staff. With a severe allergy, talk to Cornell Dining&apos;s dietitians:{" "}
-              <a className="underline" href="mailto:diningnutrition@cornell.edu">
-                diningnutrition@cornell.edu
-              </a>
-              .
-            </p>
-            <p className="mt-3">
-              <Link className="underline" href="/status">
-                Data status
-              </Link>
-            </p>
-          </footer>
-        </div>
+          </p>
+        </footer>
       </body>
     </html>
   );
 }
+

@@ -11,7 +11,7 @@ import { closeDb, getDb } from "@/lib/db/client";
 import { parseEateries } from "@/lib/cornell/dining-api";
 import { ingestSnapshot } from "@/lib/ingest/ingest";
 import { runMenuIngest, runNetNutritionSync } from "@/lib/jobs";
-import { runResearchBatch } from "@/lib/research/worker";
+import { runGlutenBackfill, runResearchBatch } from "@/lib/research/worker";
 
 async function main() {
   const [cmd, arg] = process.argv.slice(2);
@@ -43,6 +43,12 @@ async function main() {
       // Research up to N queued foods (default 25). Spends Anthropic credits.
       const stats = await runResearchBatch(db, { limit: Number(arg ?? 25), concurrency: Number(process.env.RESEARCH_CONCURRENCY ?? 4), log: (m) => console.error(m) });
       console.log(JSON.stringify({ ...stats, costUsd: Number(stats.costUsd.toFixed(3)) }, null, 2));
+      break;
+    }
+    case "gluten": {
+      // Add gluten-free likelihood ratings to researched foods missing one (~$0.001 each).
+      const stats = await runGlutenBackfill(db, { limit: Number(arg ?? 100), log: (m) => console.error(m) });
+      console.log(JSON.stringify({ ...stats, costUsd: Number(stats.costUsd.toFixed(3)) }));
       break;
     }
     default:

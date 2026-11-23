@@ -1,39 +1,58 @@
 @import "tailwindcss";
 
-/* Tokens: quiet cool paper + slate ink; status colors carry meaning, Cornell carnelian only in the wordmark. */
+/*
+ * Tokens. An evergreen header band (Ithaca's gorges), quiet sage paper, white panels.
+ * Status colors carry meaning; butter yellow marks the primary action on the band.
+ */
 :root {
-  --paper: #f6f8f7;
+  --band: #12352f;
+  --band-2: #194640;
+  --band-ink: #eaf2ee;
+  --band-muted: #a9c2b9;
+  --accent: #f2c14e;
+  --accent-ink: #2b2106;
+  --paper: #eef3f0;
   --surface: #ffffff;
-  --ink: #1e2a2f;
-  --muted: #5d6a70;
-  --rule: #dde3e2;
-  --fit: #2d7a4e;
-  --fit-tint: #e4f1e9;
-  --check: #94650a;
-  --check-tint: #fbf1dc;
-  --avoid: #8a9396;
-  --carnelian: #b31b1b;
+  --ink: #15221f;
+  --muted: #5c6b66;
+  --rule: #dce5e0;
+  --fit: #1e8a57;
+  --fit-tint: #dff2e7;
+  --check: #9a5d00;
+  --check-tint: #fdf0d6;
+  --avoid: #8e9a96;
+  --avoid-tint: #edf1ef;
   --focus: #2f6fb0;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper: #141b1e;
-    --surface: #1b2428;
-    --ink: #e6ecec;
-    --muted: #9aa8ad;
-    --rule: #2c383d;
-    --fit: #6cc495;
-    --fit-tint: #1d3328;
-    --check: #e3b356;
-    --check-tint: #3a2f17;
-    --avoid: #6f7b80;
-    --carnelian: #e0605a;
+    --band: #0e2420;
+    --band-2: #143630;
+    --band-ink: #e7efeb;
+    --band-muted: #93ada4;
+    --paper: #0f1715;
+    --surface: #17221f;
+    --ink: #e7efeb;
+    --muted: #9db0a9;
+    --rule: #26352f;
+    --fit: #5bc48d;
+    --fit-tint: #173326;
+    --check: #e8b04e;
+    --check-tint: #3a2c12;
+    --avoid: #6f7d78;
+    --avoid-tint: #1d2926;
     --focus: #7fb2e6;
   }
 }
 
 @theme inline {
+  --color-band: var(--band);
+  --color-band-2: var(--band-2);
+  --color-band-ink: var(--band-ink);
+  --color-band-muted: var(--band-muted);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
   --color-paper: var(--paper);
   --color-surface: var(--surface);
   --color-ink: var(--ink);
@@ -44,8 +63,9 @@
   --color-check: var(--check);
   --color-check-tint: var(--check-tint);
   --color-avoid: var(--avoid);
-  --color-carnelian: var(--carnelian);
+  --color-avoid-tint: var(--avoid-tint);
   --font-sans: var(--font-atkinson);
+  --font-display: var(--font-bricolage);
 }
 
 html {
@@ -63,7 +83,11 @@ body {
 :focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 2px;
-  border-radius: 4px;
+  border-radius: 6px;
+}
+
+.band :focus-visible {
+  outline-color: var(--accent);
 }
 
 @media (prefers-reduced-motion: reduce) {
