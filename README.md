@@ -26,8 +26,9 @@ after that.
 - **Gluten-free likelihood.** A recipe-based guess for each dish: *definitely*, *likely*, *less likely*
   or *unlikely*. Cornell's official labels and hall policies override it; for example, Risley is a
   gluten-free kitchen.
-- **Works on phones.** Wide screens get a sidebar. Phones get a bottom sheet for restrictions and a hall
-  switcher strip.
+- **Works on phones, installs like an app.** Wide screens get a sidebar. Phones get a bottom sheet for
+  restrictions and a hall switcher strip. On iPhone: Safari → Share → *Add to Home Screen*. On Android:
+  Chrome → *Install app*. It then opens full screen with its own icon.
 
 ## How it works
 

@@ -11,9 +11,12 @@ const bricolage = Bricolage_Grotesque({ variable: "--font-bricolage", subsets: [
 export const metadata: Metadata = {
   title: "Cornell dining, filtered",
   description: "See what you can eat in each Cornell dining hall, by allergen and diet.",
+  // Home-screen app on iPhone: full screen, red header runs under the status bar.
+  appleWebApp: { capable: true, title: "Dining", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
+  viewportFit: "cover",
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#b31b1b" },
     { media: "(prefers-color-scheme: dark)", color: "#8c1616" },
