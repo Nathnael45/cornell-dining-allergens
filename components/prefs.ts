@@ -52,3 +52,8 @@ function subscribe(l: () => void) {
 export function usePrefs(): Prefs | null {
   return useSyncExternalStore(subscribe, read, () => null);
 }
+
+/** Whether this browser has ever saved a choice (even "nothing"). null before hydration. */
+export function useHasChosen(): boolean | null {
+  return useSyncExternalStore(subscribe, () => (read(), cached!.raw !== null), () => null);
+}

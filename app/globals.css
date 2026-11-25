@@ -107,3 +107,8 @@ body {
     animation-duration: 0.01ms !important;
   }
 }
+
+/* First visit: hide the site until a restriction choice is made (set by the inline script in layout). */
+html[data-firstrun] body > :not(#first-run) {
+  visibility: hidden;
+}

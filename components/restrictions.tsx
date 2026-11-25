@@ -6,7 +6,7 @@
 import { useId, useState } from "react";
 import { LABEL, type Diet, type Prefs } from "@/lib/allergens/buckets";
 import type { AssessedAllergen } from "@/lib/allergens/status";
-import { setPrefs, usePrefs } from "./prefs";
+import { setPrefs, useHasChosen, usePrefs } from "./prefs";
 
 const MAJOR: AssessedAllergen[] = ["gluten", "milk", "egg", "peanuts", "tree_nuts", "soy", "wheat", "fish", "shellfish", "sesame"];
 const OTHER: AssessedAllergen[] = ["coconut", "pork", "alcohol"];
@@ -117,6 +117,36 @@ export function Restrictions() {
         </>
       )}
     </section>
+  );
+}
+
+/** First visit: a full-screen choice before the site shows. Saving (even "nothing") ends it for good. */
+export function FirstRun() {
+  const prefs = usePrefs();
+  const chosen = useHasChosen();
+  // Latch open once shown: each toggle saves, which would otherwise count as "chosen" and close it mid-pick.
+  const [state, setState] = useState<"idle" | "open" | "done">("idle");
+  if (state === "idle" && chosen === false) setState("open");
+  if (!prefs || state !== "open") return null;
+  const n = prefs.avoid.length + prefs.diets.length;
+  const finish = () => {
+    setPrefs(prefs);
+    delete document.documentElement.dataset.firstrun;
+    setState("done");
+  };
+  return (
+    <div id="first-run" role="dialog" aria-modal="true" aria-labelledby="first-run-title" className="fixed inset-0 z-50 overflow-y-auto bg-side text-ink">
+      <div className="mx-auto max-w-2xl px-5 pt-[max(2rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+        <h1 id="first-run-title" className="font-display text-[1.8rem] leading-tight font-bold">
+          What do you avoid?
+        </h1>
+        <p className="mt-1 mb-6 text-muted">We&apos;ll show what fits in each dining hall. Saved only on this device; change it any time.</p>
+        <Options prefs={prefs} />
+        <button type="button" onClick={finish} className="sticky bottom-4 mt-4 w-full rounded-full bg-band py-3.5 font-bold text-band-ink">
+          {n ? "Show what fits" : "I don’t avoid anything"}
+        </button>
+      </div>
+    </div>
   );
 }
 
